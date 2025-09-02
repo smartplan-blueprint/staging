@@ -31,9 +31,13 @@ jobs:
           coverage: none
           tools: composer:v2
 
-      - name: Create source tarball
+      - name: Create source archive from Git
         run: |
-          tar --exclude-vcs --exclude=".github" --exclude="node_modules" --exclude="tests" --exclude="var" -czf release.tgz .
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git archive --format=tar.gz -o release.tgz HEAD \
+            -- \
+              . ":(exclude).github" ":(exclude)node_modules" ":(exclude)tests" ":(exclude)var"
+
 
       - name: SSH agent
         uses: webfactory/ssh-agent@v0.9.0

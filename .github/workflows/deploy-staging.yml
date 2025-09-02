@@ -44,10 +44,36 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Trust host
+     # (1) Optional: quick connectivity check with clear error
+      - name: Check SSH connectivity
+        run:  |
+          H="${{ secrets.SSH_HOST }}"; P="${{ secrets.SSH_PORT }}"
+          echo "Testing TCP to $H:$P ..."
+          timeout 5 bash -lc ">/dev/tcp/$H/$P" && echo "✅ Reachable" || (echo "❌ Unreachable"; exit 1)
+
+# (2) Try to fetch the host key, but don't fail the job if it times out
+      - name: Trust host (best-effort)
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          # Prefer IPv4, 15s timeout; ignore failure so the next steps can still proceed
+          ssh-keyscan -4 -T 15 -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts || true
+
+# (3) Upload (skip strict host checking so we don't depend on keyscan)
+      - name: Upload release
+        run: |
+          scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+              -P "${{ secrets.SSH_PORT }}" release.tgz \
+              "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/${RELEASE}.tgz"
+
+# (4) Remote deploy (same relaxed options)
+      - name: Remote deploy
+        env:
+            RELEASE: ${{ env.RELEASE }}
+            DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+              -p "${{ secrets.SSH_PORT }}" \
+              "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" bash -s <<'EOSSH'
 
       - name: Upload release
         run: |

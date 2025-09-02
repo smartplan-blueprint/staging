@@ -63,7 +63,6 @@ jobs:
           mkdir -p "$RELEASE_DIR"
           tar -xzf "/tmp/${RELEASE}.tgz" -C "$RELEASE_DIR"
           rm -f "/tmp/${RELEASE}.tgz"
-
           cd "$RELEASE_DIR"
 
           # Link shared dirs/files
@@ -99,4 +98,3 @@ jobs:
           cd "${DEPLOY_PATH}/releases"
           ls -1t | tail -n +6 | xargs -r rm -rf --
           EOSSH
-YAML

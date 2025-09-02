@@ -80,12 +80,16 @@ jobs:
           scp -P ${{ secrets.SSH_PORT }} release.tgz ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/${RELEASE}.tgz
 
       - name: Remote deploy
-        env:
-          RELEASE: ${{ env.RELEASE }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
-          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash -s <<'EOSSH'
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+              -p "${{ secrets.SSH_PORT }}" \
+              "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+              "DEPLOY_PATH='${{ secrets.DEPLOY_PATH }}' RELEASE='${{ env.RELEASE }}' bash -s" <<'EOSSH'
           set -euo pipefail
+
+          : "${DEPLOY_PATH:?missing DEPLOY_PATH}"   # hard fail if still missing
+          : "${RELEASE:?missing RELEASE}"
+
           RELEASE_DIR="${DEPLOY_PATH}/releases/${RELEASE}"
           CURRENT_LINK="${DEPLOY_PATH}/current"
           SHARED_DIR="${DEPLOY_PATH}/shared"
@@ -116,14 +120,14 @@ jobs:
           chown -R deploy:www-data "$RELEASE_DIR"
           find "$RELEASE_DIR/var" -type d -exec chmod 2775 {} \; 2>/dev/null || true
           find "$RELEASE_DIR/var" -type f -exec chmod 0664 {} \; 2>/dev/null || true
-
+      
           # Atomic switch
           ln -sfn "$RELEASE_DIR" "$CURRENT_LINK"
-
+      
           # Reload services
           systemctl reload php8.2-fpm || true
           systemctl reload apache2 || true
-
+      
           # Keep last 5 releases
           cd "${DEPLOY_PATH}/releases"
           ls -1t | tail -n +6 | xargs -r rm -rf --

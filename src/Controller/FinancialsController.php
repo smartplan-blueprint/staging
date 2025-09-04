@@ -110,11 +110,11 @@ class FinancialsController extends AbstractController
         return $this->render('financials/transfers.html.twig');
     }
 
-    #[Route('/summary', name: 'financials_summary')]
-    public function summary(): Response
-    {
-        return $this->render('financials/summary.html.twig');
-    }
+//    #[Route('/summary', name: 'financials_summary')]
+//    public function summary(): Response
+//    {
+//        return $this->render('financials/summary.html.twig');
+//    }
 
 
 

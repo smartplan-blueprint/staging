@@ -32,4 +32,15 @@ class WithdrawalsRepository extends ServiceEntityRepository
         return $result ? (string) $result : '0';
     }
 
+    public function getTotalWithdrawals(): float
+    {
+        $query = $this->createQueryBuilder('w')
+            ->select('SUM(w.amount) as total')
+            ->where('w.status = :status')
+            ->setParameter('status', 'completed')
+            ->getQuery();
+
+        return (float) ($query->getSingleScalarResult() ?? 0);
+    }
+
 }

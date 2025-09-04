@@ -58,4 +58,30 @@ class PortalUserRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function getWeeklyActivity(): array
+    {
+        $startDate = new \DateTime('-7 days');
+
+        $query = $this->createQueryBuilder('u')
+            ->select('u.dateCreated')
+            ->where('u.dateCreated >= :startDate')
+            ->setParameter('startDate', $startDate)
+            ->getQuery();
+
+        $results = $query->getResult();
+
+        // Process data in PHP
+        $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        $activityData = array_fill_keys($daysOfWeek, 0);
+
+        foreach ($results as $result) {
+            if ($result['dateCreated'] instanceof \DateTime) {
+                $dayName = $result['dateCreated']->format('l');
+                $activityData[$dayName]++;
+            }
+        }
+
+        return $activityData;
+    }
 }

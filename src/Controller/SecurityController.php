@@ -67,51 +67,6 @@ use Symfony\Component\Security\Core\User\InMemoryUser;
 
 class SecurityController extends AbstractController
 {
-//    #[Route('/login', name: 'app_login', methods: ['GET', 'POST'])]
-//    public function login(Request $request, AuthenticationUtils $authenticationUtils, ManagerRegistry $doctrine): Response
-//    {
-//        // Debug form submission
-//        if ($request->isMethod('POST')) {
-//            $email = $request->request->get('email');
-//            $password = $request->request->get('password');
-//
-//            // Manually check in-memory users (admin@mail.com)
-//            $inMemoryUsers = [
-//                'admin@mail.com' => [
-//                    'password' => 'admin1234',
-//                    'roles' => ['ROLE_ADMIN', 'ROLE_USER']
-//                ]
-//            ];
-//
-//            // Get database user
-//            $dbUser = $doctrine->getRepository(User::class)->findOneBy(['email' => $email]);
-//
-//            dump([
-//                'submitted_email' => $email,
-//                'in_memory_user_exists' => array_key_exists($email, $inMemoryUsers),
-//                'database_user' => $dbUser ? [
-//                    'email' => $dbUser->getEmail(),
-//                    'roles' => $dbUser->getRoles()
-//                ] : null
-//            ]);
-//
-//            return $this->redirectToRoute('app_dashboard');
-//        }
-//
-//        if ($this->getUser()) {
-//            return $this->redirectToRoute('app_dashboard');
-//        }
-//
-//        // get the login error if there is one
-//        $error = $authenticationUtils->getLastAuthenticationError();
-//        // last username entered by the user
-//        $lastUsername = $authenticationUtils->getLastUsername();
-//
-//        return $this->render('security/login.html.twig', [
-//            'last_username' => $lastUsername,
-//            'error' => $error,
-//        ]);
-//    }
 
     #[Route('/login', name: 'app_login', methods: ['GET', 'POST'])]
     public function login(Request $request, AuthenticationUtils $authenticationUtils): Response
@@ -134,6 +89,19 @@ class SecurityController extends AbstractController
     public function logout(): Response
     {
         throw new \LogicException('This method can be blank - it will be intercepted by the logout key on your firewall.');
+    }
+
+    #[Route('/session-info', name: 'app_session_info')]
+    public function sessionInfo(): Response
+    {
+        $session = $this->get('request_stack')->getCurrentRequest()->getSession();
+
+        return $this->json([
+            'session_id' => $session->getId(),
+            'session_name' => $session->getName(),
+            'session_data' => $session->all(),
+            'cookie_params' => session_get_cookie_params()
+        ]);
     }
 }
 

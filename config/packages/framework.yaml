@@ -1,9 +1,15 @@
 # see https://symfony.com/doc/current/reference/configuration/framework.html
 framework:
     session:
-        handler_id: null
+        handler_id: session.handler.native_file
+        save_path: '%kernel.project_dir%/var/sessions/%kernel.environment%'
         cookie_secure: auto
         cookie_samesite: lax
+        name: 'APP_SESSION'  # Unique session name
+        gc_maxlifetime: 1800 # 30 minutes
+        gc_probability: 1
+        gc_divisor: 100
+
 
     secret: '%env(APP_SECRET)%'
 

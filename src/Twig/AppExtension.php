@@ -3,18 +3,19 @@
 // src/Twig/AppExtension.php
 namespace App\Twig;
 
+use App\Service\MerchantContext;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
 use Twig\TwigFunction;
 
 class AppExtension extends AbstractExtension
 {
-    public function getFunctions()
-    {
-        return [
-            new TwigFunction('get_report_route', [$this, 'getReportRoute']),
-        ];
-    }
+//    public function getFunctions()
+//    {
+//        return [
+//            new TwigFunction('get_report_route', [$this, 'getReportRoute']),
+//        ];
+//    }
 
     public function getReportRoute(string $reportName): string
     {
@@ -89,4 +90,24 @@ class AppExtension extends AbstractExtension
 //        // Format as currency (e.g., 1000 → "P1,000.00")
 //        return 'P' . number_format($value, 2);
 //    }
+
+
+    private $merchantContext;
+
+    public function __construct(MerchantContext $merchantContext)
+    {
+        $this->merchantContext = $merchantContext;
+    }
+
+    public function getFunctions(): array
+    {
+        return [
+            new TwigFunction('get_current_merchant', [$this, 'getCurrentMerchant']),
+        ];
+    }
+
+    public function getCurrentMerchant()
+    {
+        return $this->merchantContext->getCurrentMerchant();
+    }
 }

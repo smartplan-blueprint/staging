@@ -122,6 +122,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\JoinColumn(nullable: false)]
     private Merchant $merchant;
 
+
+    private $isTempPassword = true;
+
+    /**
+     * @ORM\Column(type="datetime", nullable=true)
+     */
+    private $passwordChangedAt;
+
+
     // Transient properties (not stored in DB)
     private ?string $firstName = null;
     private ?string $lastName = null;
@@ -309,6 +318,39 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->name;
     }
+
+    public function getIsTempPassword(): bool
+    {
+        return $this->isTempPassword;
+    }
+
+    public function setIsTempPassword(bool $isTempPassword): self
+    {
+        $this->isTempPassword = $isTempPassword;
+        return $this;
+    }
+
+    public function getPasswordChangedAt(): ?\DateTimeInterface
+    {
+        return $this->passwordChangedAt;
+    }
+
+    public function setPasswordChangedAt(?\DateTimeInterface $passwordChangedAt): self
+    {
+        $this->passwordChangedAt = $passwordChangedAt;
+        return $this;
+    }
+
+    /**
+     * Check if user needs password reset (using temp password for more than 7 days)
+     */
+    public function needsPasswordReset(): bool
+    {
+        return $this->isTempPassword &&
+            $this->getDate_created() &&
+            $this->getDate_created()->diff(new \DateTime())->days > 7;
+    }
+
 
 }
 

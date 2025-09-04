@@ -77,4 +77,44 @@ class MerchantRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public function save(Merchant $entity, bool $flush = false): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function remove(Merchant $entity, bool $flush = false): void
+    {
+        $this->getEntityManager()->remove($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function findAllActive()
+    {
+        return $this->createQueryBuilder('m')
+            ->andWhere('m.isActive = :isActive')
+            ->setParameter('isActive', true)
+            ->orderBy('m.name', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findBySearchTerm(string $searchTerm)
+    {
+        return $this->createQueryBuilder('m')
+            ->andWhere('m.name LIKE :searchTerm OR m.code LIKE :searchTerm')
+            ->setParameter('searchTerm', '%' . $searchTerm . '%')
+            ->orderBy('m.name', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

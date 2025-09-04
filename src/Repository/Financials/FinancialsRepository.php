@@ -105,4 +105,98 @@ class FinancialsRepository extends ServiceEntityRepository
             $this->getEntityManager()->flush();
         }
     }
+
+//    public function getMonthlySales(): array
+//    {
+//        $query = $this->createQueryBuilder('s')
+//            ->select("MONTH(s.saleDate) as month, YEAR(s.saleDate) as year, SUM(s.total) as total")
+//            ->groupBy('year, month')
+//            ->orderBy('year', 'ASC')
+//            ->addOrderBy('month', 'ASC')
+//            ->getQuery();
+//
+//        $results = $query->getResult();
+//
+//        // Format the results with month names
+//        $monthlyData = [];
+//        $monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+//
+//        foreach ($results as $result) {
+//            $monthIndex = $result['month'] - 1; // Convert to 0-based index
+//            if (isset($monthNames[$monthIndex])) {
+//                $monthlyData[$monthNames[$monthIndex]] = (float) $result['total'];
+//            }
+//        }
+//
+//        // Ensure all months are present with 0 values
+//        $completeData = [];
+//        foreach ($monthNames as $month) {
+//            $completeData[$month] = $monthlyData[$month] ?? 0;
+//        }
+//
+//        return $completeData;
+//    }
+
+    public function getMonthlySales(): array
+    {
+        // Get sales data grouped by month
+        $query = $this->createQueryBuilder('s')
+            ->select('s.saleDate, SUM(s.total) as totalSales')
+            ->groupBy('s.saleDate')
+            ->orderBy('s.saleDate', 'ASC')
+            ->getQuery();
+
+        $results = $query->getResult();
+
+        // Initialize monthly data with zeros
+        $monthlyData = [
+            'Jan' => 0, 'Feb' => 0, 'Mar' => 0, 'Apr' => 0,
+            'May' => 0, 'Jun' => 0, 'Jul' => 0, 'Aug' => 0,
+            'Sep' => 0, 'Oct' => 0, 'Nov' => 0, 'Dec' => 0
+        ];
+
+        // Process the results
+        foreach ($results as $result) {
+            if ($result['saleDate'] instanceof \DateTimeInterface) {
+                $month = $result['saleDate']->format('M');
+                $monthlyData[$month] += (float) $result['totalSales'];
+            }
+        }
+
+        return $monthlyData;
+    }
+
+//    public function getMonthlySales(): array
+//    {
+//        $query = $this->createQueryBuilder('s')
+//            ->select('s.saleDate, s.total')
+//            ->orderBy('s.saleDate', 'ASC')
+//            ->getQuery();
+//
+//        $results = $query->getResult();
+//
+//        // Process data in PHP
+//        $monthlyData = array_fill_keys(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], 0);
+//
+//        foreach ($results as $result) {
+//            if ($result['saleDate'] instanceof \DateTime) {
+//                $month = $result['saleDate']->format('M');
+//                $monthlyData[$month] += (float) $result['total'];
+//            }
+//        }
+//
+//        return $monthlyData;
+//    }
+    public function getTopPerformingMerchants(): array
+    {
+        $query = $this->createQueryBuilder('s')
+            ->select('m.name as merchantName, SUM(s.total) as totalSales')
+            ->join('s.merchant', 'm')
+            ->groupBy('s.merchant')
+            ->orderBy('totalSales', 'DESC')
+            ->setMaxResults(5)
+            ->getQuery();
+
+        return $query->getResult();
+    }
 }

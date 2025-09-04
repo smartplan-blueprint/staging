@@ -1,0 +1,618 @@
+{% extends 'superadmin_base.html.twig' %}
+
+{% block title %}Analytics - Smart Plan Blueprint{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .stat-card {
+            border-radius: 12px;
+            transition: transform 0.3s ease;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 24px;
+            height: 100%;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .filter-section {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 24px;
+        }
+
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+        }
+
+        .analytics-table th {
+            border-top: none;
+            font-weight: 600;
+            color: var(--gray);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Date Range Filter -->
+    <div class="filter-section">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h5 class="mb-0">Performance Analytics</h5>
+                <p class="text-muted mb-0">Track and analyze platform performance</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary active">Today</button>
+                    <button type="button" class="btn btn-outline-primary">Week</button>
+                    <button type="button" class="btn btn-outline-primary">Month</button>
+                    <button type="button" class="btn btn-outline-primary">Quarter</button>
+                    <button type="button" class="btn btn-outline-primary">Year</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="card-title">{{ totalMerchants }}</h3>
+                            <p class="card-text mb-0">Total Merchants</p>
+                        </div>
+                        <i class="fas fa-store fa-2x opacity-50"></i>
+                    </div>
+                    <div class="mt-2">
+                        {% set growthRate = totalMerchants > 0 ? ((totalMerchants - (totalMerchants - recentMerchants|length)) / totalMerchants * 100)|round(0) : 0 %}
+                        <span class="badge bg-light text-primary">+{{ growthRate }}% this month</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="card-title">{{ activeMerchants }}</h3>
+                            <p class="card-text mb-0">Active Merchants</p>
+                        </div>
+                        <i class="fas fa-check-circle fa-2x opacity-50"></i>
+                    </div>
+                    <div class="mt-2">
+                        {% set activeRate = totalMerchants > 0 ? (activeMerchants / totalMerchants * 100)|round(0) : 0 %}
+                        <span class="badge bg-light text-success">{{ activeRate }}% active rate</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="card-title">{{ totalUsers }}</h3>
+                            <p class="card-text mb-0">Total Users</p>
+                        </div>
+                        <i class="fas fa-users fa-2x opacity-50"></i>
+                    </div>
+                    <div class="mt-2">
+                        <span class="badge bg-light text-info">+8% this month</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="card-title">94%</h3>
+                            <p class="card-text mb-0">System Uptime</p>
+                        </div>
+                        <i class="fas fa-server fa-2x opacity-50"></i>
+                    </div>
+                    <div class="mt-2">
+                        <span class="badge bg-light text-warning">3 incidents this month</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row mb-4">
+        <div class="col-md-8 mb-4">
+            <div class="chart-container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="chart-title mb-0">Monthly Sales Performance</h5>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary">Export</button>
+                    </div>
+                </div>
+                <canvas id="salesPerformanceChart" height="250"></canvas>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="chart-container">
+                <h5 class="chart-title">Merchant Status Distribution</h5>
+                <canvas id="merchantStatusChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="row mb-4">
+        <div class="col-md-7 mb-4">
+            <div class="chart-container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="chart-title mb-0">Financial Overview</h5>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary">Export</button>
+                    </div>
+                </div>
+                <canvas id="financialOverviewChart" height="250"></canvas>
+            </div>
+        </div>
+        <div class="col-md-5 mb-4">
+            <div class="chart-container">
+                <h5 class="chart-title">Top Performing Merchants</h5>
+                <div class="mt-3">
+                    {% for merchant in topMerchants %}
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>{{ merchant.merchantName }}</div>
+                            <div class="d-flex align-items-center">
+                                {% set percentage = (merchant.totalSales / (topMerchants[0].totalSales ?: 1)) * 100 %}
+                                <div class="progress flex-grow-1 me-2" style="width: 100px;">
+                                    <div class="progress-bar
+                                        {% if loop.first %}bg-success
+                                        {% elseif loop.index == 2 %}bg-primary
+                                        {% elseif loop.index == 3 %}bg-info
+                                        {% elseif loop.index == 4 %}bg-warning
+                                        {% else %}bg-danger
+                                        {% endif %}"
+                                         role="progressbar"
+                                         style="width: {{ percentage }}%">
+                                    </div>
+                                </div>
+                                <span>{{ percentage|round(0) }}%</span>
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No data available</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Table -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="card-title mb-0">Recent Merchant Registrations</h5>
+                <a href="{{ path('app_merchant_index') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover analytics-table">
+                    <thead>
+                    <tr>
+                        <th>Merchant</th>
+                        <th>Merchant ID</th>
+                        <th>Registered</th>
+                        <th>Status</th>
+                        <th>Contact</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for merchant in recentMerchants %}
+                        <tr>
+                            <td>{{ merchant.name }}</td>
+                            <td>{{ merchant.code }}</td>
+                            <td>{{ merchant.registrationDate|date('Y-m-d') }}</td>
+                            <td>
+                                    <span class="{{ merchant.isActive ? 'status-active' : 'status-inactive' }}">
+                                        {{ merchant.isActive ? 'Active' : 'Inactive' }}
+                                    </span>
+                            </td>
+                            <td>
+                                {% if merchant.merchantDetails %}
+                                    {{ merchant.merchantDetails.contactName }}
+                                {% else %}
+                                    Not provided
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center">No merchants found</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        {#document.addEventListener('DOMContentLoaded', function() {#}
+        {#    // Sales Performance Chart#}
+        {#    const salesCtx = document.getElementById('salesPerformanceChart').getContext('2d');#}
+        {#    const salesChart = new Chart(salesCtx, {#}
+        {#        type: 'line',#}
+        {#        data: {#}
+        {#            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],#}
+        {#            datasets: [{#}
+        {#                label: 'Total Sales',#}
+        {#                data: [12000, 19000, 8000, 15000, 14000, 18000, 22000, 17000, 20000, 15000, 18000, 24000],#}
+        {#                borderColor: '#4361ee',#}
+        {#                backgroundColor: 'rgba(67, 97, 238, 0.1)',#}
+        {#                tension: 0.4,#}
+        {#                fill: true#}
+        {#            }]#}
+        {#        },#}
+        {#        options: {#}
+        {#            responsive: true,#}
+        {#            plugins: {#}
+        {#                legend: {#}
+        {#                    position: 'top',#}
+        {#                }#}
+        {#            },#}
+        {#            scales: {#}
+        {#                y: {#}
+        {#                    beginAtZero: true,#}
+        {#                    ticks: {#}
+        {#                        callback: function(value) {#}
+        {#                            return 'P' + value.toLocaleString();#}
+        {#                        }#}
+        {#                    }#}
+        {#                }#}
+        {#            }#}
+        {#        }#}
+        {#    });#}
+
+        {#    // Merchant Status Chart#}
+        {#    const statusCtx = document.getElementById('merchantStatusChart').getContext('2d');#}
+        {#    const statusChart = new Chart(statusCtx, {#}
+        {#        type: 'doughnut',#}
+        {#        data: {#}
+        {#            labels: ['Active', 'Inactive', 'Trial', 'Suspended'],#}
+        {#            datasets: [{#}
+        {#                data: [#}
+        {#                    {{ merchantStatusData.active }},#}
+        {#                    {{ merchantStatusData.inactive }},#}
+        {#                    {{ merchantStatusData.trial }},#}
+        {#                    {{ merchantStatusData.suspended }}#}
+        {#                ],#}
+        {#                backgroundColor: [#}
+        {#                    '#4cc9f0',#}
+        {#                    '#f72585',#}
+        {#                    '#f8961e',#}
+        {#                    '#6c757d'#}
+        {#                ],#}
+        {#                borderWidth: 0#}
+        {#            }]#}
+        {#        },#}
+        {#        options: {#}
+        {#            responsive: true,#}
+        {#            plugins: {#}
+        {#                legend: {#}
+        {#                    position: 'bottom',#}
+        {#                }#}
+        {#            }#}
+        {#        }#}
+        {#    });#}
+
+        {#    // Financial Overview Chart#}
+        {#    const financialCtx = document.getElementById('financialOverviewChart').getContext('2d');#}
+        {#    const financialChart = new Chart(financialCtx, {#}
+        {#        type: 'bar',#}
+        {#        data: {#}
+        {#            labels: ['Deposits', 'Withdrawals', 'Reversals', 'Commission'],#}
+        {#            datasets: [{#}
+        {#                label: 'Amount (BWP)',#}
+        {#                data: [#}
+        {#                    {{ totalDeposits }},#}
+        {#                    {{ totalWithdrawals }},#}
+        {#                    {{ totalReversals }},#}
+        {#                    {{ totalCommission }}#}
+        {#                ],#}
+        {#                backgroundColor: [#}
+        {#                    'rgba(67, 97, 238, 0.7)',#}
+        {#                    'rgba(247, 37, 133, 0.7)',#}
+        {#                    'rgba(248, 150, 30, 0.7)',#}
+        {#                    'rgba(76, 201, 240, 0.7)'#}
+        {#                ],#}
+        {#                borderColor: [#}
+        {#                    '#4361ee',#}
+        {#                    '#f72585',#}
+        {#                    '#f8961e',#}
+        {#                    '#4cc9f0'#}
+        {#                ],#}
+        {#                borderWidth: 1#}
+        {#            }]#}
+        {#        },#}
+        {#        options: {#}
+        {#            responsive: true,#}
+        {#            plugins: {#}
+        {#                legend: {#}
+        {#                    position: 'top',#}
+        {#                }#}
+        {#            },#}
+        {#            scales: {#}
+        {#                y: {#}
+        {#                    beginAtZero: true,#}
+        {#                    ticks: {#}
+        {#                        callback: function(value) {#}
+        {#                            return 'P' + value.toLocaleString();#}
+        {#                        }#}
+        {#                    }#}
+        {#                }#}
+        {#            }#}
+        {#        }#}
+        {#    });#}
+
+        {#    // Date range filter buttons#}
+        {#    const filterButtons = document.querySelectorAll('.btn-group .btn');#}
+        {#    filterButtons.forEach(button => {#}
+        {#        button.addEventListener('click', function() {#}
+        {#            filterButtons.forEach(btn => btn.classList.remove('active'));#}
+        {#            this.classList.add('active');#}
+        {#            // Here you would typically reload data based on the selected filter#}
+        {#        });#}
+        {#    });#}
+        {#});#}
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sales Performance Chart
+            const salesCtx = document.getElementById('salesPerformanceChart').getContext('2d');
+            const salesChart = new Chart(salesCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Total Sales',
+                        data: [
+                            {{ monthlySales.Jan }},
+                            {{ monthlySales.Feb }},
+                            {{ monthlySales.Mar }},
+                            {{ monthlySales.Apr }},
+                            {{ monthlySales.May }},
+                            {{ monthlySales.Jun }},
+                            {{ monthlySales.Jul }},
+                            {{ monthlySales.Aug }},
+                            {{ monthlySales.Sep }},
+                            {{ monthlySales.Oct }},
+                            {{ monthlySales.Nov }},
+                            {{ monthlySales.Dec }}
+                        ],
+                        borderColor: '#4361ee',
+                        backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'P' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Merchant Status Chart
+            const statusCtx = document.getElementById('merchantStatusChart').getContext('2d');
+            const statusChart = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Active', 'Inactive', 'Trial', 'Suspended'],
+                    datasets: [{
+                        data: [
+                            {{ merchantStatusData.active }},
+                            {{ merchantStatusData.inactive }},
+                            {{ merchantStatusData.trial }},
+                            {{ merchantStatusData.suspended }}
+                        ],
+                        backgroundColor: [
+                            '#4cc9f0',
+                            '#f72585',
+                            '#f8961e',
+                            '#6c757d'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+
+            // User Activity Chart
+            const activityCtx = document.getElementById('userActivityChart').getContext('2d');
+            const activityChart = new Chart(activityCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'User Registrations',
+                        data: [
+                            {{ userActivity.Monday }},
+                            {{ userActivity.Tuesday }},
+                            {{ userActivity.Wednesday }},
+                            {{ userActivity.Thursday }},
+                            {{ userActivity.Friday }},
+                            {{ userActivity.Saturday }},
+                            {{ userActivity.Sunday }}
+                        ],
+                        backgroundColor: 'rgba(67, 97, 238, 0.7)',
+                        borderColor: '#4361ee',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Financial Overview Chart
+            {#const financialCtx = document.getElementById('financialOverviewChart').getContext('2d');#}
+            {#const financialChart = new Chart(financialCtx, {#}
+            {#    type: 'bar',#}
+            {#    data: {#}
+            {#        labels: ['Deposits', 'Withdrawals', 'Reversals', 'Commission'],#}
+            {#        datasets: [{#}
+            {#            label: 'Amount (P)',#}
+            {#            data: [#}
+            {#                {{ totalDeposits }},#}
+            {#                {{ totalWithdrawals }},#}
+            {#                {{ totalReversals }},#}
+            {#                {{ totalCommission }}#}
+            {#            ],#}
+            {#            backgroundColor: [#}
+            {#                'rgba(67, 97, 238, 0.7)',#}
+            {#                'rgba(247, 37, 133, 0.7)',#}
+            {#                'rgba(248, 150, 30, 0.7)',#}
+            {#                'rgba(76, 201, 240, 0.7)'#}
+            {#            ],#}
+            {#            borderColor: [#}
+            {#                '#4361ee',#}
+            {#                '#f72585',#}
+            {#                '#f8961e',#}
+            {#                '#4cc9f0'#}
+            {#            ],#}
+            {#            borderWidth: 1#}
+            {#        }]#}
+            {#    },#}
+            {#    options: {#}
+            {#        responsive: true,#}
+            {#        plugins: {#}
+            {#            legend: {#}
+            {#                position: 'top',#}
+            {#            }#}
+            {#        },#}
+            {#        scales: {#}
+            {#            y: {#}
+            {#                beginAtZero: true,#}
+            {#                ticks: {#}
+            {#                    callback: function(value) {#}
+            {#                        return 'P' + value.toLocaleString();#}
+            {#                    }#}
+            {#                }#}
+            {#            }#}
+            {#        }#}
+            {#    }#}
+            {#});#}
+
+                // Financial Overview Chart
+                const financialCtx = document.getElementById('financialOverviewChart').getContext('2d');
+                const financialChart = new Chart(financialCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Deposits', 'Withdrawals', 'Reversals', 'Commission'],
+                        datasets: [{
+                            label: 'Amount (BWP)',
+                            data: [
+                                {{ totalDeposits }},
+                                {{ totalWithdrawals }},
+                                {{ totalReversals }},
+                                {{ totalCommission }}
+                            ],
+                            backgroundColor: [
+                                'rgba(67, 97, 238, 0.7)',
+                                'rgba(247, 37, 133, 0.7)',
+                                'rgba(248, 150, 30, 0.7)',
+                                'rgba(76, 201, 240, 0.7)'
+                            ],
+                            borderColor: [
+                                '#4361ee',
+                                '#f72585',
+                                '#f8961e',
+                                '#4cc9f0'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return 'P' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+            // Date range filter buttons
+            const filterButtons = document.querySelectorAll('.btn-group .btn');
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    // Here you would typically reload data based on the selected filter
+                });
+            });
+        });
+    </script>
+{% endblock %}

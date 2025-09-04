@@ -223,4 +223,15 @@ class ReversalsRepository extends ServiceEntityRepository
             $this->_em->flush();
         }
     }
+    public function getTotalReversals(): float
+    {
+        $query = $this->createQueryBuilder('r')
+            ->select('SUM(r.amount) as total')
+            ->where('r.status = :status')
+            ->setParameter('status', 'completed')
+            ->getQuery();
+
+        return $query->getSingleScalarResult() ?? 0;
+    }
+
 }

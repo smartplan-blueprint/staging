@@ -1,0 +1,42 @@
+{% extends 'superadmin_base.html.twig' %}
+
+{% block title %}New Merchant - Smart Plan Blueprint{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Create New Merchant</h1>
+        <a href="{{ path('app_merchant_index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to list
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {{ form_start(form) }}
+            <div class="row">
+                <div class="col-md-6">
+                    <h4 class="mb-3">Basic Information</h4>
+                    {{ form_row(form.name) }}
+                    {{ form_row(form.code) }}
+                    {{ form_row(form.registrationDate) }}
+                    {{ form_row(form.clientId) }}
+                    {{ form_row(form.isActive) }}
+                </div>
+                <div class="col-md-6">
+                    <h4 class="mb-3">Contact Details</h4>
+                    {{ form_row(form.merchantDetails.groupName) }}
+                    {{ form_row(form.merchantDetails.contactName) }}
+                    {{ form_row(form.merchantDetails.contactEmail) }}
+                    {{ form_row(form.merchantDetails.contactPhone) }}
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i> Save Merchant
+                </button>
+            </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}

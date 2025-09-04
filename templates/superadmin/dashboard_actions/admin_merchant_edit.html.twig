@@ -1,0 +1,123 @@
+{% extends 'superadmin_base.html.twig' %}
+
+{% block title %}Edit Merchant - {{ merchant.name }} - Smart Plan Blueprint{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="merchant-title">Edit Merchant</h2>
+            <div class="merchant-id">Merchant ID: {{ merchant.code }}</div>
+        </div>
+        <div>
+            <a href="{{ path('app_merchant_index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to List
+            </a>
+            <a href="{{ path('app_merchant_view', {'id': merchant.id}) }}" class="btn btn-info">
+                <i class="fas fa-eye me-1"></i> View Details
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">Edit Merchant Information</h5>
+        </div>
+        <div class="card-body">
+            {{ form_start(form) }}
+
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <h5 class="border-bottom pb-2 mb-3">Basic Information</h5>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    {{ form_label(form.name, 'Merchant Name', {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                    {{ form_widget(form.name, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.name) }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    {{ form_label(form.code, 'Merchant Code', {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                    {{ form_widget(form.code, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.code) }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    {{ form_label(form.clientId, 'Client ID', {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                    {{ form_widget(form.clientId, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.clientId) }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    {{ form_label(form.registrationDate, 'Registration Date', {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                    {{ form_widget(form.registrationDate, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.registrationDate) }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <div class="form-check form-switch">
+                        {{ form_widget(form.isActive, {'attr': {'class': 'form-check-input'}}) }}
+                        {{ form_label(form.isActive, 'Is Active', {'label_attr': {'class': 'form-check-label fw-bold'}}) }}
+                    </div>
+                    {{ form_errors(form.isActive) }}
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <h5 class="border-bottom pb-2 mb-3">Contact Information</h5>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    {{ form_label(form.merchantDetails.groupName, 'Group Name', {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                    {{ form_widget(form.merchantDetails.groupName, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.merchantDetails.groupName) }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    {{ form_label(form.merchantDetails.contactName, 'Contact Name', {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                    {{ form_widget(form.merchantDetails.contactName, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.merchantDetails.contactName) }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    {{ form_label(form.merchantDetails.contactEmail, 'Contact Email', {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                    {{ form_widget(form.merchantDetails.contactEmail, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.merchantDetails.contactEmail) }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    {{ form_label(form.merchantDetails.contactPhone, 'Contact Phone', {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                    {{ form_widget(form.merchantDetails.contactPhone, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.merchantDetails.contactPhone) }}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-save me-1"></i> Save Changes
+                    </button>
+                    <a href="{{ path('app_merchant_view', {'id': merchant.id}) }}" class="btn btn-secondary">
+                        <i class="fas fa-times me-1"></i> Cancel
+                    </a>
+                </div>
+            </div>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+        // Add some client-side validation or enhancements if needed
+        document.addEventListener('DOMContentLoaded', function() {
+            // Example: Add date picker functionality if needed
+            const registrationDateInput = document.querySelector('#{{ form.registrationDate.vars.id }}');
+            if (registrationDateInput) {
+                // You could initialize a date picker here if needed
+            }
+        });
+    </script>
+{% endblock %}

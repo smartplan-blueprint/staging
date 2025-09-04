@@ -124,17 +124,25 @@ security:
                 property: email
 
     firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
         main:
             provider: chain_provider
+
             form_login:
                 username_parameter: 'email'
                 password_parameter: 'password'
                 check_path: app_login
                 login_path: app_login
-                default_target_path: app_dashboard
+                success_handler: App\Security\AuthenticationSuccessHandler
+#                default_target_path: app_dashboard
                 enable_csrf: true
             logout:
                 path: app_logout
+                target: app_login
+
             user_checker: App\Service\UserChecker
             # Add this if you're using remember me functionality
             remember_me:
@@ -146,13 +154,15 @@ security:
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/register, roles: PUBLIC_ACCESS }
+        - { path: ^/dashboard/admin, roles: ROLE_SUPER_ADMIN }
+        - { path: ^/dashboard/merchant, roles: ROLE_USER }
         - { path: ^/dashboard, roles: ROLE_USER }
-        - { path: ^/merchant/, roles: [ROLE_USER, ROLE_ADMIN, ROLE_SUPER_ADMIN] }
+        - { path: ^/admin, roles: ROLE_SUPER_ADMIN }
+        - { path: ^/merchant/, roles: ROLE_USER }
         - { path: ^/financials, roles: ROLE_USER }
         - { path: ^/commission, roles: ROLE_USER }
         - { path: ^/limits, roles: ROLE_USER }
         - { path: ^/reports, roles: ROLE_USER }
-        - { path: ^/admin, roles: ROLE_SUPER_ADMIN }
         - { path: ^/help, roles: ROLE_USER }
         - { path: ^/settings, roles: ROLE_USER }
         - { path: ^/profile, roles: ROLE_USER }

@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Entity\Merchant;
+use AllowDynamicProperties;
 use App\Entity\Merchant;
 use App\Repository\Merchant\PortalUserRepository;
 use App\Repository\MerchantRepository;
@@ -81,7 +82,7 @@ class PortalUserDetails implements UserInterface, PasswordAuthenticatedUserInter
     /**
      * @param mixed $name
      */
-    public function setName($name): felf
+    public function setName($name): self
     {
         $this->name = $name;
         return $this;

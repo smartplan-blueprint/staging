@@ -118,6 +118,14 @@ class TransactionRepository extends ServiceEntityRepository
         ];
     }
 
+    public function getTotalDeposits(): float
+    {
+        $query = $this->createQueryBuilder('t')
+            ->select('SUM(t.deposits) as total')
+            ->getQuery();
+
+        return $query->getSingleScalarResult() ?? 0;
+    }
 
 //    public function getGroupedTransactionsByDateRange(\DateTimeInterface $startDate, \DateTimeInterface $endDate)
 //    {

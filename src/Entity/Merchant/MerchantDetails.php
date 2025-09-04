@@ -17,12 +17,17 @@ class MerchantDetails
     #[ORM\Column(type: 'integer')]
     private $id;
 
-    #[ORM\OneToOne(targetEntity: Merchant::class, inversedBy: "details")]
-    #[ORM\JoinColumn(name: "merchant_id", referencedColumnName: "id")]
-    private $merchant;
+//    #[ORM\OneToOne(targetEntity: Merchant::class, inversedBy: "details")]
+//    #[ORM\JoinColumn(name: "merchant_id", referencedColumnName: "id")]
+//    private $merchant;
 
-    #[ORM\Column(type: 'string', length: 255)]
-    private $groupName;
+
+    #[ORM\OneToOne(inversedBy: 'merchantDetails', targetEntity: Merchant::class)]
+    #[ORM\JoinColumn(name: 'merchant_id', referencedColumnName: 'id', nullable: false)]
+    private ?Merchant $merchant = null;
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $groupName = null;
 
 
     #[ORM\Column(type: 'string', length: 255)]

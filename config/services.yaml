@@ -1,10 +1,11 @@
 # This file is the entry point to configure your own services.
 # Files in the packages/ subdirectory configure your dependencies.
 
-# Put parameters here that don't need to change on each machine where the app is deployed
-# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     app_version: '1.0.0'
+#    twilio_account_sid: '%env(TWILIO_ACCOUNT_SID)%'
+#    twilio_auth_token: '%env(TWILIO_AUTH_TOKEN)%'
+#    twilio_phone_number: '%env(TWILIO_PHONE_NUMBER)%'
 
 services:
     # default configuration for services in *this* file
@@ -22,9 +23,59 @@ services:
             - '../src/Kernel.php'
             - '../src/Tests/'
 
+#    App\EventListener\LogoutSubscriber:
+#        arguments:
+#            $requestStack: '@request_stack'
+#        tags:
+#            - { name: kernel.event_subscriber }
+#
+#    App\EventListener\SessionListener:
+#        arguments:
+#            $tokenStorage: '@security.token_storage'
+#            $requestStack: '@request_stack' # or $sessionFactory: '@session.factory'
+#        tags:
+#            - { name: kernel.event_subscriber }
+
+    App\EventListener\LogoutSubscriber:
+        arguments:
+            $requestStack: '@request_stack'
+            $logger: '@logger'
+        tags:
+            - { name: kernel.event_subscriber }
+
+    App\EventListener\SessionListener:
+        arguments:
+            $tokenStorage: '@security.token_storage'
+            $requestStack: '@request_stack'
+            $logger: '@logger'
+        tags:
+            - { name: kernel.event_subscriber }
+
+    App\Service\MerchantContext:
+        arguments:
+            $requestStack: '@request_stack'
+            $security: '@security.helper'
+
+
+    App\Security\AuthenticationSuccessHandler:
+        arguments:
+            $router: '@router'
+            $authorizationChecker: '@security.authorization_checker'
+        tags: [ ]
+
+#    App\Controller\SuperAdmin\MerchantController:
+#        arguments:
+#            $twilioAccountSid: '%twilio_account_sid%'
+#            $twilioAuthToken: '%twilio_auth_token%'
+#            $twilioPhoneNumber: '%twilio_phone_number%'
+
+
+    # Twig extension
+    App\Twig\AppExtension:
+        arguments:
+            $merchantContext: '@App\Service\MerchantContext'
+        tags:
+            - { name: twig.extension }
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
-# config/services.yaml
-
-    App\Twig\AppExtension:
-        tags: ['twig.extension']

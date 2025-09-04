@@ -1464,26 +1464,63 @@
 </head>
 <body>
 <!-- Sidebar -->
+{#<div class="sidebar">#}
+{#    <h2 class="sidebar-brand">Smart Plan Blueprint</h2>#}
+
+{#    {% set current_merchant = app.session.get('current_merchant') ?? (merchant is defined ? merchant : null) %}#}
+
+{#    <a href="{% if current_merchant and current_merchant.id %}{{ path('app_dashboard', {'id': current_merchant.id}) }}{% else %}{{ path('app_dashboard') }}{% endif %}"#}
+{#       class="sidebar-item {{ app.request.get('_route') == 'app_dashboard' ? 'active' : '' }}"#}
+{#       {% if not (current_merchant and current_merchant.id) %}title="Dashboard - merchant context not set"{% endif %}>#}
+{#        <i class="fas fa-tachometer-alt"></i> Dashboard#}
+{#    </a>#}
+{#    <a href="{% if current_merchant and current_merchant.id %}{{ path('app_financials', {'id': current_merchant.id}) }}{% else %}#{% endif %}"#}
+{#       class="sidebar-item {{ app.request.get('_route') starts with 'app_financials' ? 'active' : '' }}"#}
+{#       {% if not (current_merchant and current_merchant.id) %}title="Select a merchant first"{% endif %}>#}
+{#        <i class="fas fa-chart-line"></i> Financials#}
+{#    </a>#}
+{#    <a href="{% if current_merchant and current_merchant.id %}{{ path('app_limits_and_docs', {'id': current_merchant.id}) }}{% else %}#{% endif %}"#}
+{#       class="sidebar-item {{ app.request.get('_route') starts with 'app_limits_and_docs' ? 'active' : '' }}"#}
+{#       {% if not (current_merchant and current_merchant.id) %}title="Select a merchant first"{% endif %}>#}
+{#        <i class="fas fa-file-clipboard"></i> Limits & Documents#}
+{#    </a>#}
+{#    <a href="{% if current_merchant and current_merchant.id %}{{ path('app_reports', {'id': current_merchant.id}) }}{% else %}#{% endif %}"#}
+{#       class="sidebar-item {{ app.request.get('_route') starts with 'app_reports' ? 'active' : '' }}"#}
+{#       {% if not (current_merchant and current_merchant.id) %}title="Select a merchant first"{% endif %}>#}
+{#        <i class="fas fa-file-alt"></i> Reports#}
+{#    </a>#}
+{#    <a href="{{ path('app_logout') }}" class="sidebar-item">#}
+{#        <i class="fas fa-sign-out-alt"></i> Logout#}
+{#    </a>#}
+{#</div>#}
+
+<!-- Sidebar -->
 <div class="sidebar">
     <h2 class="sidebar-brand">Smart Plan Blueprint</h2>
-    <a href="{{ path('app_dashboard') }}" class="sidebar-item {{ app.request.get('_route') == 'app_dashboard' ? 'active' : '' }}">
+
+    {% set current_merchant = merchant ?? app.session.get('current_merchant') %}
+
+    <a href="{% if current_merchant and current_merchant.id %}{{ path('app_dashboard', {'id': current_merchant.id}) }}{% else %}{{ path('app_dashboard') }}{% endif %}"
+       class="sidebar-item {{ app.request.get('_route') == 'app_dashboard' ? 'active' : '' }}"
+       {% if not (current_merchant and current_merchant.id) %}title="Dashboard - merchant context not set"{% endif %}>
         <i class="fas fa-tachometer-alt"></i> Dashboard
     </a>
-    <a href="{% if merchant is defined and merchant.id %}{{ path('app_financials', {'id': merchant.id}) }}{% else %}#{% endif %}"
+    <a href="{% if current_merchant and current_merchant.id %}{{ path('app_financials', {'id': current_merchant.id}) }}{% else %}#{% endif %}"
        class="sidebar-item {{ app.request.get('_route') starts with 'app_financials' ? 'active' : '' }}"
-       {% if not (merchant is defined and merchant.id) %}title="Select a merchant first"{% endif %}>
+       {% if not (current_merchant and current_merchant.id) %}title="Select a merchant first" style="opacity: 0.6; pointer-events: none;"{% endif %}>
         <i class="fas fa-chart-line"></i> Financials
     </a>
-    <a href="{% if merchant is defined and merchant.id %}{{ path('app_limits_and_docs', {'id': merchant.id}) }}{% else %}#{% endif %}"
+    <a href="{% if current_merchant and current_merchant.id %}{{ path('app_limits_and_docs', {'id': current_merchant.id}) }}{% else %}#{% endif %}"
        class="sidebar-item {{ app.request.get('_route') starts with 'app_limits_and_docs' ? 'active' : '' }}"
-       {% if not (merchant is defined and merchant.id) %}title="Select a merchant first"{% endif %}>
+       {% if not (current_merchant and current_merchant.id) %}title="Select a merchant first" style="opacity: 0.6; pointer-events: none;"{% endif %}>
         <i class="fas fa-file-clipboard"></i> Limits & Documents
     </a>
-    <a href="{% if merchant is defined and merchant.id %}{{ path('app_reports', {'id': merchant.id}) }}{% else %}#{% endif %}"
+    <a href="{% if current_merchant and current_merchant.id %}{{ path('app_reports', {'id': current_merchant.id}) }}{% else %}#{% endif %}"
        class="sidebar-item {{ app.request.get('_route') starts with 'app_reports' ? 'active' : '' }}"
-       {% if not (merchant is defined and merchant.id) %}title="Select a merchant first"{% endif %}>
+       {% if not (current_merchant and current_merchant.id) %}title="Select a merchant first" style="opacity: 0.6; pointer-events: none;"{% endif %}>
         <i class="fas fa-file-alt"></i> Reports
     </a>
+
     <a href="{{ path('app_logout') }}" class="sidebar-item">
         <i class="fas fa-sign-out-alt"></i> Logout
     </a>

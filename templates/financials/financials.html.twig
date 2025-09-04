@@ -4,7 +4,12 @@
 
 {% block header_title %}Financials Overview{% endblock %}
 
-{% block breadcrumb %}Financials / Sales{% endblock %}
+{% block breadcrumb %}
+    <div class="breadcrumb-item">
+        <a href="{{ path('app_financials', {'id': merchant.id}) }}" style="color: #7f8c8d;" class="breadcrumb-link">Financials</a>
+        <span class="breadcrumb-separator"></span>
+    </div>
+{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
@@ -102,8 +107,8 @@
             <!-- Merchant Header -->
             <div class="dashboard-card">
                 <div class="header-content">
-                    <h2 class="merchant-title">{{ merchant.name }}</h2>
-                    <div class="merchant-id">Merchant ID: {{ merchant.code }}</div>
+                    <h2 class="merchant-title">{{ app.user.merchant.name }}</h2>
+                    <div class="merchant-id">Merchant ID: {{ app.user.merchant.code }}</div>
                 </div>
 
                 <!-- Dates -->

@@ -99,4 +99,13 @@ class CommissionEarnedRepository extends ServiceEntityRepository
             $this->getEntityManager()->flush();
         }
     }
+
+    public function getTotalCommission(): float
+    {
+        $query = $this->createQueryBuilder('ec')
+            ->select('SUM(ec.merchantCommission) as total')
+            ->getQuery();
+
+        return $query->getSingleScalarResult() ?? 0;
+    }
 }

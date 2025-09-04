@@ -1,0 +1,308 @@
+{#{% extends 'superadmin_base.html.twig' %}#}
+
+{#{% block title %}View Merchant - {{ merchant.name }} - Smart Plan Blueprint{% endblock %}#}
+
+{#{% block body %}#}
+{#    <div class="d-flex justify-content-between align-items-center mb-4">#}
+{#        <div>#}
+{#            <h2 class="merchant-title">Merchant Details</h2>#}
+{#            <div class="merchant-id">Merchant ID: {{ merchant.code }}</div>#}
+{#        </div>#}
+{#        <div>#}
+{#            <a href="{{ path('app_merchant_index') }}" class="btn btn-secondary">#}
+{#                <i class="fas fa-arrow-left me-1"></i> Back to List#}
+{#            </a>#}
+{#            <a href="{{ path('app_merchant_edit', {'id': merchant.id}) }}" class="btn btn-primary">#}
+{#                <i class="fas fa-edit me-1"></i> Edit Merchant#}
+{#            </a>#}
+{#        </div>#}
+{#    </div>#}
+
+{#    <div class="row">#}
+{#        <div class="col-md-8">#}
+{#            <div class="card shadow-sm mb-4">#}
+{#                <div class="card-header bg-primary text-white">#}
+{#                    <h5 class="card-title mb-0">Basic Information</h5>#}
+{#                </div>#}
+{#                <div class="card-body">#}
+{#                    <div class="row mb-3">#}
+{#                        <div class="col-md-4 fw-bold">Merchant Name:</div>#}
+{#                        <div class="col-md-8">{{ merchant.name }}</div>#}
+{#                    </div>#}
+{#                    <div class="row mb-3">#}
+{#                        <div class="col-md-4 fw-bold">Merchant Code:</div>#}
+{#                        <div class="col-md-8">{{ merchant.code }}</div>#}
+{#                    </div>#}
+{#                    <div class="row mb-3">#}
+{#                        <div class="col-md-4 fw-bold">Client ID:</div>#}
+{#                        <div class="col-md-8">{{ merchant.clientId }}</div>#}
+{#                    </div>#}
+{#                    <div class="row mb-3">#}
+{#                        <div class="col-md-4 fw-bold">Registration Date:</div>#}
+{#                        <div class="col-md-8">{{ merchant.registrationDate|date('Y-m-d') }}</div>#}
+{#                    </div>#}
+{#                    <div class="row mb-3">#}
+{#                        <div class="col-md-4 fw-bold">Status:</div>#}
+{#                        <div class="col-md-8">#}
+{#                        <span class="{{ merchant.isActive ? 'status-active' : 'status-inactive' }}">#}
+{#                            {{ merchant.isActive ? 'Active' : 'Inactive' }}#}
+{#                        </span>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+
+{#            {% if merchant.merchantDetails %}#}
+{#                <div class="card shadow-sm mb-4">#}
+{#                    <div class="card-header bg-info text-white">#}
+{#                        <h5 class="card-title mb-0">Contact Information</h5>#}
+{#                    </div>#}
+{#                    <div class="card-body">#}
+{#                        <div class="row mb-3">#}
+{#                            <div class="col-md-4 fw-bold">Group Name:</div>#}
+{#                            <div class="col-md-8">{{ merchant.merchantDetails.groupName ?? 'Not provided' }}</div>#}
+{#                        </div>#}
+{#                        <div class="row mb-3">#}
+{#                            <div class="col-md-4 fw-bold">Contact Name:</div>#}
+{#                            <div class="col-md-8">{{ merchant.merchantDetails.contactName ?? 'Not provided' }}</div>#}
+{#                        </div>#}
+{#                        <div class="row mb-3">#}
+{#                            <div class="col-md-4 fw-bold">Contact Email:</div>#}
+{#                            <div class="col-md-8">#}
+{#                                {% if merchant.merchantDetails.contactEmail %}#}
+{#                                    <a href="mailto:{{ merchant.merchantDetails.contactEmail }}">#}
+{#                                        {{ merchant.merchantDetails.contactEmail }}#}
+{#                                    </a>#}
+{#                                {% else %}#}
+{#                                    Not provided#}
+{#                                {% endif %}#}
+{#                            </div>#}
+{#                        </div>#}
+{#                        <div class="row mb-3">#}
+{#                            <div class="col-md-4 fw-bold">Contact Phone:</div>#}
+{#                            <div class="col-md-8">{{ merchant.merchantDetails.contactPhone ?? 'Not provided' }}</div>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            {% endif %}#}
+{#        </div>#}
+
+{#        <div class="col-md-4">#}
+{#            <div class="card shadow-sm mb-4">#}
+{#                <div class="card-header bg-warning text-white">#}
+{#                    <h5 class="card-title mb-0">Quick Actions</h5>#}
+{#                </div>#}
+{#                <div class="card-body">#}
+{#                    <div class="d-grid gap-2">#}
+{#                        <form method="post" action="{{ path('app_merchant_toggle_status', {'id': merchant.id}) }}" class="d-inline">#}
+{#                            <input type="hidden" name="_token" value="{{ csrf_token('toggle-status' ~ merchant.id) }}">#}
+{#                            <button type="submit" class="btn {{ merchant.isActive ? 'btn-warning' : 'btn-success' }} w-100 mb-2">#}
+{#                                <i class="fas {{ merchant.isActive ? 'fa-ban' : 'fa-check' }} me-1"></i>#}
+{#                                {{ merchant.isActive ? 'Deactivate' : 'Activate' }} Merchant#}
+{#                            </button>#}
+{#                        </form>#}
+
+{#                        <a href="{{ path('app_merchant_edit', {'id': merchant.id}) }}" class="btn btn-primary w-100 mb-2">#}
+{#                            <i class="fas fa-edit me-1"></i> Edit Merchant#}
+{#                        </a>#}
+
+{#                        <form method="post" action="{{ path('app_merchant_delete', {'id': merchant.id}) }}"#}
+{#                              onsubmit="return confirm('Are you sure you want to delete this merchant? This action cannot be undone.');"#}
+{#                              class="d-inline">#}
+{#                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ merchant.id) }}">#}
+{#                            <button type="submit" class="btn btn-danger w-100">#}
+{#                                <i class="fas fa-trash me-1"></i> Delete Merchant#}
+{#                            </button>#}
+{#                        </form>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+
+{#            <div class="card shadow-sm">#}
+{#                <div class="card-header bg-secondary text-white">#}
+{#                    <h5 class="card-title mb-0">Statistics</h5>#}
+{#                </div>#}
+{#                <div class="card-body">#}
+{#                    <div class="text-center">#}
+{#                        <div class="mb-3">#}
+{#                            <i class="fas fa-store fa-3x text-primary"></i>#}
+{#                        </div>#}
+{#                        <p class="mb-1">Registered: {{ merchant.registrationDate|date('M j, Y') }}</p>#}
+{#                        <p class="mb-0">Status:#}
+{#                            <span class="{{ merchant.isActive ? 'status-active' : 'status-inactive' }}">#}
+{#                            {{ merchant.isActive ? 'Active' : 'Inactive' }}#}
+{#                        </span>#}
+{#                        </p>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{#{% endblock %}#}
+
+
+{% extends 'superadmin_base.html.twig' %}
+
+{% block title %}View Merchant - {{ merchant.name }} - Smart Plan Blueprint{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="merchant-title">Merchant Details</h2>
+            <div class="merchant-id">Merchant ID: {{ merchant.code }}</div>
+        </div>
+        <div>
+            <a href="{{ path('app_merchant_index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to List
+            </a>
+            <a href="{{ path('app_merchant_edit', {'id': merchant.id}) }}" class="btn btn-primary">
+                <i class="fas fa-edit me-1"></i> Edit Merchant
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Basic Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Merchant Name:</div>
+                        <div class="col-md-8">{{ merchant.name }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Merchant Code:</div>
+                        <div class="col-md-8">{{ merchant.code }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Client ID:</div>
+                        <div class="col-md-8">{{ merchant.clientId }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Registration Date:</div>
+                        <div class="col-md-8">{{ merchant.registrationDate|date('Y-m-d') }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Status:</div>
+                        <div class="col-md-8">
+                        <span class="{{ merchant.isActive ? 'status-active' : 'status-inactive' }}">
+                            {{ merchant.isActive ? 'Active' : 'Inactive' }}
+                        </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if merchant.merchantDetails %}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">Contact Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold">Group Name:</div>
+                            <div class="col-md-8">{{ merchant.merchantDetails.groupName ?? 'Not provided' }}</div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold">Contact Name:</div>
+                            <div class="col-md-8">{{ merchant.merchantDetails.contactName ?? 'Not provided' }}</div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold">Contact Email:</div>
+                            <div class="col-md-8">
+                                {% if merchant.merchantDetails.contactEmail %}
+                                    <a href="mailto:{{ merchant.merchantDetails.contactEmail }}">
+                                        {{ merchant.merchantDetails.contactEmail }}
+                                    </a>
+                                {% else %}
+                                    Not provided
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold">Contact Phone:</div>
+                            <div class="col-md-8">{{ merchant.merchantDetails.contactPhone ?? 'Not provided' }}</div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="card-title mb-0">Admin Account</h5>
+                </div>
+                <div class="card-body">
+                    {% set adminUser = merchant.users|filter(u => 'ROLE_ADMIN' in u.roles)|first %}
+
+                    {% if adminUser %}
+                        <div class="mb-3">
+                            <strong>Admin Email:</strong> {{ adminUser.email }}<br>
+                            <strong>Account Status:</strong>
+                            <span class="{{ adminUser.enabled ? 'status-active' : 'status-inactive' }}">
+                            {{ adminUser.enabled ? 'Active' : 'Inactive' }}
+                        </span>
+                        </div>
+
+                        <div class="mb-3">
+                            <strong>Password Status:</strong>
+                            {% if adminUser.isTempPassword %}
+                                <span class="badge bg-warning">Temporary Password</span>
+                                <small class="text-muted d-block">User needs to change password</small>
+                            {% else %}
+                                <span class="badge bg-success">Password Changed</span>
+                                <small class="text-muted d-block">Last changed: {{ adminUser.passwordChangedAt|date('Y-m-d H:i') }}</small>
+                            {% endif %}
+                        </div>
+
+                        <form method="post" action="{{ path('app_merchant_regenerate_password', {'id': merchant.id}) }}" class="d-grid">
+                            <input type="hidden" name="_token" value="{{ csrf_token('regenerate-password' ~ merchant.id) }}">
+                            <button type="submit" class="btn btn-warning"
+                                    onclick="return confirm('Are you sure you want to generate a new password? This will send an email to the admin user.')">
+                                <i class="fas fa-key me-1"></i> Generate New Password
+                            </button>
+                        </form>
+                    {% else %}
+                        <p class="text-muted">No admin user found for this merchant.</p>
+                        <a href="{{ path('app_merchant_edit', {'id': merchant.id}) }}#users" class="btn btn-primary">
+                            <i class="fas fa-user-plus me-1"></i> Create Admin User
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <form method="post" action="{{ path('app_merchant_toggle_status', {'id': merchant.id}) }}" class="d-inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token('toggle-status' ~ merchant.id) }}">
+                            <button type="submit" class="btn {{ merchant.isActive ? 'btn-warning' : 'btn-success' }} w-100 mb-2">
+                                <i class="fas {{ merchant.isActive ? 'fa-ban' : 'fa-check' }} me-1"></i>
+                                {{ merchant.isActive ? 'Deactivate' : 'Activate' }} Merchant
+                            </button>
+                        </form>
+
+                        <a href="{{ path('app_merchant_edit', {'id': merchant.id}) }}" class="btn btn-primary w-100 mb-2">
+                            <i class="fas fa-edit me-1"></i> Edit Merchant
+                        </a>
+
+                        <form method="post" action="{{ path('app_merchant_delete', {'id': merchant.id}) }}"
+                              onsubmit="return confirm('Are you sure you want to delete this merchant? This action cannot be undone.');"
+                              class="d-inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ merchant.id) }}">
+                            <button type="submit" class="btn btn-danger w-100">
+                                <i class="fas fa-trash me-1"></i> Delete Merchant
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

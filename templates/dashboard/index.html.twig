@@ -1,6 +1,11 @@
 {% extends 'base.html.twig' %}
 
 {% block title %}Merchant Dashboard{% endblock %}
+{% block breadcrumb %}
+    <div class="breadcrumb-item">
+        <a href="{{ path('app_dashboard', {'id': merchant.id}) }}" style="color: #7f8c8d;" class="breadcrumb-link">Dashboard</a>
+    </div>
+{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
@@ -66,6 +71,12 @@
                     {% endif %}
                 </div>
             </div>
+
+{#            <div class="header-content">#}
+{#                <h2 class="merchant-title">{{ app.user.merchant.name }}</h2>#}
+{#                <div class="merchant-id">Merchant ID: {{ app.user.merchant.code }}</div>#}
+{#            </div>#}
+
             <!-- Dates -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
@@ -76,19 +87,20 @@
                 </div>
                 <div id="date-range" style="display: flex; gap: 10px;">
 
-                    <a href="{{ path('app_dashboard', {'range': 'today'}) }}"
+                    <a href="{{ path('app_dashboard', { 'id': merchant.id, 'range': 'today'}) }}"
                        style="padding: 8px 15px; {{ dateRange.currentRange == 'today' ? 'background-color: var(--secondary); color: white;' : 'background-color: var(--light);' }} border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center;">
                         Today
                     </a>
-                    <a href="{{ path('app_dashboard', {'range': 'week'}) }}"
+                    <a href="{{ path('app_dashboard', { 'id': merchant.id, 'range': 'week'}) }}"
                        style="padding: 8px 15px; {{ dateRange.currentRange == 'week' ? 'background-color: var(--secondary); color: white;' : 'background-color: var(--light);' }} border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center;">
                         Last 7 Days
                     </a>
-                    <a href="{{ path('app_dashboard', {'range': 'month'}) }}"
+                    <a href="{{ path('app_dashboard', { 'id': merchant.id, 'range': 'month'}) }}"
                        style="padding: 8px 15px; {{ dateRange.currentRange == 'month' ? 'background-color: var(--secondary); color: white;' : 'background-color: var(--light);' }} border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center;">
                         Month to Date
                     </a>
                 </div>
+
             </div>
         </div>
 

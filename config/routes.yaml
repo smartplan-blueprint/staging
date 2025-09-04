@@ -8,10 +8,20 @@ app_login:
 app_logout:
     path: /logout
 
+app_merchant_index:
+    path: /admin/merchant
+    controller: App\Controller\SuperAdmin\MerchantController::index
+    methods: GET
+
 # Main dashboard route
 app_dashboard:
     path: /dashboard
     controller: App\Controller\DashboardController::index
+    methods: GET
+
+app_merchant_selection:
+    path: /dashboard/select-merchant/{id}
+    controller: App\Controller\DashboardController::selectMerchant
     methods: GET
 
 # Redirect root to dashboard

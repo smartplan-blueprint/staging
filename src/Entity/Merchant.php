@@ -42,6 +42,9 @@ class Merchant
     #[ORM\OneToMany(mappedBy: 'merchant', targetEntity: Provider::class, cascade: ['persist', 'remove'])]
     private Collection $providers;
 
+    #[ORM\OneToOne(mappedBy: 'merchant', targetEntity: MerchantDetails::class, cascade: ['persist', 'remove'])]
+    private ?MerchantDetails $merchantDetails = null;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -76,6 +79,8 @@ class Merchant
      */
     private $agreements;
 
+    private Collection $users;
+
     // Getters and setters...
     public function __construct()
     {
@@ -89,6 +94,7 @@ class Merchant
         $this->agreementCommissions = new ArrayCollection();
         $this->agreements = new ArrayCollection();
         $this->transactions = new ArrayCollection();
+        $this->users = new ArrayCollection();
 
     }
 
@@ -225,6 +231,7 @@ class Merchant
     {
         $this->transaction = $transaction;
     }
+
 
     public function getDetails(): ?MerchantDetails
     {
@@ -364,6 +371,57 @@ class Merchant
                 $transaction->setMerchant(null);
             }
         }
+        return $this;
+    }
+
+    // Add this method to your Merchant class
+    public function getMerchantDetails(): ?MerchantDetails
+    {
+        return $this->merchantDetails;
+    }
+
+    public function setMerchantDetails(?MerchantDetails $merchantDetails): self
+    {
+        if ($merchantDetails === null && $this->merchantDetails !== null) {
+            $this->merchantDetails->setMerchant(null);
+        }
+
+        if ($merchantDetails !== null && $merchantDetails->getMerchant() !== $this) {
+            $merchantDetails->setMerchant($this);
+        }
+
+        $this->merchantDetails = $merchantDetails;
+        return $this;
+    }
+
+
+    /**
+     * @return Collection|User[]
+     */
+    public function getUsers(): Collection
+    {
+        return $this->users;
+    }
+
+    public function addUser(User $user): static
+    {
+        if (!$this->users->contains($user)) {
+            $this->users[] = $user;
+            $user->setMerchant($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUser(User $user): self
+    {
+        if ($this->users->removeElement($user)) {
+            // set the owning side to null (unless already changed)
+            if ($user->getMerchant() === $this) {
+                $user->setMerchant(null);
+            }
+        }
+
         return $this;
     }
 

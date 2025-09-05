@@ -235,16 +235,55 @@
                 <div class="card-header bg-warning text-white">
                     <h5 class="card-title mb-0">Admin Account</h5>
                 </div>
+{#                <div class="card-body">#}
+{#                    {% set adminUser = merchant.users|filter(u => 'ROLE_ADMIN' in u.roles)|first %}#}
+
+{#                    {% if adminUser %}#}
+{#                        <div class="mb-3">#}
+{#                            <strong>Admin Email:</strong> {{ adminUser.email }}<br>#}
+{#                            <strong>Account Status:</strong>#}
+{#                            <span class="{{ adminUser.enabled ? 'status-active' : 'status-inactive' }}">#}
+{#                            {{ adminUser.enabled ? 'Active' : 'Inactive' }}#}
+{#                        </span>#}
+{#                        </div>#}
+
+{#                        <div class="mb-3">#}
+{#                            <strong>Password Status:</strong>#}
+{#                            {% if adminUser.isTempPassword %}#}
+{#                                <span class="badge bg-warning">Temporary Password</span>#}
+{#                                <small class="text-muted d-block">User needs to change password</small>#}
+{#                            {% else %}#}
+{#                                <span class="badge bg-success">Password Changed</span>#}
+{#                                <small class="text-muted d-block">Last changed: {{ adminUser.passwordChangedAt|date('Y-m-d H:i') }}</small>#}
+{#                            {% endif %}#}
+{#                        </div>#}
+
+{#                        <form method="post" action="{{ path('app_merchant_regenerate_password', {'id': merchant.id}) }}" class="d-grid">#}
+{#                            <input type="hidden" name="_token" value="{{ csrf_token('regenerate-password' ~ merchant.id) }}">#}
+{#                            <button type="submit" class="btn btn-warning"#}
+{#                                    onclick="return confirm('Are you sure you want to generate a new password? This will send an email to the admin user.')">#}
+{#                                <i class="fas fa-key me-1"></i> Generate New Password#}
+{#                            </button>#}
+{#                        </form>#}
+{#                    {% else %}#}
+{#                        <p class="text-muted">No admin user found for this merchant.</p>#}
+{#                        <a href="{{ path('app_merchant_edit', {'id': merchant.id}) }}#users" class="btn btn-primary">#}
+{#                            <i class="fas fa-user-plus me-1"></i> Create Admin User#}
+{#                        </a>#}
+{#                    {% endif %}#}
+{#                </div>#}
+
                 <div class="card-body">
-                    {% set adminUser = merchant.users|filter(u => 'ROLE_ADMIN' in u.roles)|first %}
+                    {# Use null-safe operator to handle potential null users collection #}
+                    {% set adminUser = merchant.users|default([])|filter(u => 'ROLE_ADMIN' in u.roles)|first %}
 
                     {% if adminUser %}
                         <div class="mb-3">
                             <strong>Admin Email:</strong> {{ adminUser.email }}<br>
                             <strong>Account Status:</strong>
                             <span class="{{ adminUser.enabled ? 'status-active' : 'status-inactive' }}">
-                            {{ adminUser.enabled ? 'Active' : 'Inactive' }}
-                        </span>
+                {{ adminUser.enabled ? 'Active' : 'Inactive' }}
+            </span>
                         </div>
 
                         <div class="mb-3">
@@ -254,7 +293,13 @@
                                 <small class="text-muted d-block">User needs to change password</small>
                             {% else %}
                                 <span class="badge bg-success">Password Changed</span>
-                                <small class="text-muted d-block">Last changed: {{ adminUser.passwordChangedAt|date('Y-m-d H:i') }}</small>
+                                <small class="text-muted d-block">
+                                    {% if adminUser.passwordChangedAt %}
+                                        Last changed: {{ adminUser.passwordChangedAt|date('Y-m-d H:i') }}
+                                    {% else %}
+                                        Password change date not available
+                                    {% endif %}
+                                </small>
                             {% endif %}
                         </div>
 
@@ -300,6 +345,25 @@
                                 <i class="fas fa-trash me-1"></i> Delete Merchant
                             </button>
                         </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="card-title mb-0">Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-store fa-3x text-primary"></i>
+                        </div>
+                        <p class="mb-1">Registered: {{ merchant.registrationDate|date('M j, Y') }}</p>
+                        <p class="mb-0">Status:
+                            <span class="{{ merchant.isActive ? 'status-active' : 'status-inactive' }}">
+                                {{ merchant.isActive ? 'Active' : 'Inactive' }}
+                            </span>
+                        </p>
                     </div>
                 </div>
             </div>

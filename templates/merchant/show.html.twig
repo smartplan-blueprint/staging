@@ -6,7 +6,13 @@
 
 {% block breadcrumb %}
     <div class="breadcrumb-item">
-        <a href="{{ path('app_dashboard') }}" style="color: #7f8c8d;" class="breadcrumb-link">Dashboard</a>
+        <a href="
+        {% if is_granted('ROLE_SUPER_ADMIN') or is_granted('ROLE_GROUP_ADMIN') %}
+            {{ path('app_dashboard_admin') }}
+        {% else %}
+            {{ path('app_dashboard_merchant', {'id': app.user.merchant.id}) }}
+        {% endif %}
+        " style="color: #7f8c8d;" class="breadcrumb-link">Dashboard</a>
         <span class="breadcrumb-separator"> / </span>
         <a href="{{ path('merchant_show', {'id': merchant.id}) }}" style="color: #7f8c8d;" class="breadcrumb-link">Merchant-Details</a>
     </div>

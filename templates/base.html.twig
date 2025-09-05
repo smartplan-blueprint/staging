@@ -1495,28 +1495,95 @@
 {#</div>#}
 
 <!-- Sidebar -->
+{#<div class="sidebar">#}
+{#    <h2 class="sidebar-brand">Smart Plan Blueprint</h2>#}
+
+{#    {% set current_merchant = merchant ?? app.session.get('current_merchant') %}#}
+{#    <a href="#}
+{#{% if current_merchant and current_merchant.id %}#}
+{#    {{ path('app_dashboard_merchant', {'id': current_merchant.id}) }}#}
+{#{% else %}#}
+{#    {{ path('app_dashboard_home') }}#}
+{#{% endif %}"#}
+{#       class="sidebar-item {{ app.request.get('_route') in ['app_dashboard_merchant', 'app_dashboard_admin', 'app_dashboard_home'] ? 'active' : '' }}"#}
+{#       {% if not (current_merchant and current_merchant.id) %}title="Dashboard - merchant context not set"{% endif %}>#}
+{#        <i class="fas fa-tachometer-alt"></i> Dashboard#}
+{#    </a>#}
+{#    <a href="{% if current_merchant and current_merchant.id %}{{ path('app_financials', {'id': current_merchant.id}) }}{% else %}#{% endif %}"#}
+{#       class="sidebar-item {{ app.request.get('_route') starts with 'app_financials' ? 'active' : '' }}"#}
+{#       {% if not (current_merchant and current_merchant.id) %}title="Select a merchant first" style="opacity: 0.6; pointer-events: none;"{% endif %}>#}
+{#        <i class="fas fa-chart-line"></i> Financials#}
+{#    </a>#}
+{#    <a href="{% if current_merchant and current_merchant.id %}{{ path('app_limits_and_docs', {'id': current_merchant.id}) }}{% else %}#{% endif %}"#}
+{#       class="sidebar-item {{ app.request.get('_route') starts with 'app_limits_and_docs' ? 'active' : '' }}"#}
+{#       {% if not (current_merchant and current_merchant.id) %}title="Select a merchant first" style="opacity: 0.6; pointer-events: none;"{% endif %}>#}
+{#        <i class="fas fa-file-clipboard"></i> Limits & Documents#}
+{#    </a>#}
+{#    <a href="{% if current_merchant and current_merchant.id %}{{ path('app_reports', {'id': current_merchant.id}) }}{% else %}#{% endif %}"#}
+{#       class="sidebar-item {{ app.request.get('_route') starts with 'app_reports' ? 'active' : '' }}"#}
+{#       {% if not (current_merchant and current_merchant.id) %}title="Select a merchant first" style="opacity: 0.6; pointer-events: none;"{% endif %}>#}
+{#        <i class="fas fa-file-alt"></i> Reports#}
+{#    </a>#}
+
+{#    <a href="{{ path('app_logout') }}" class="sidebar-item">#}
+{#        <i class="fas fa-sign-out-alt"></i> Logout#}
+{#    </a>#}
+{#</div>#}
+
+<!-- Sidebar -->
+<!-- Sidebar -->
 <div class="sidebar">
     <h2 class="sidebar-brand">Smart Plan Blueprint</h2>
 
-    {% set current_merchant = merchant ?? app.session.get('current_merchant') %}
+    {# Get current merchant from session or user's merchant #}
+    {% set current_merchant = app.session.get('current_merchant') ?? (app.user and app.user.merchant is defined ? app.user.merchant : null) %}
 
-    <a href="{% if current_merchant and current_merchant.id %}{{ path('app_dashboard', {'id': current_merchant.id}) }}{% else %}{{ path('app_dashboard') }}{% endif %}"
-       class="sidebar-item {{ app.request.get('_route') == 'app_dashboard' ? 'active' : '' }}"
+    {# Debug: Uncomment if needed to see what merchant is being used #}
+    {# <div style="display: none;">Current Merchant ID: {{ current_merchant ? current_merchant.id : 'none' }}</div> #}
+
+    {# Get current route for active link checking #}
+    {% set current_route = app.request.get('_route') %}
+
+    <a href="
+    {% if current_merchant and current_merchant.id %}
+        {{ path('app_dashboard_merchant', {'id': current_merchant.id}) }}
+    {% else %}
+        {{ path('app_dashboard_home') }}
+    {% endif %}"
+       class="sidebar-item {{ current_route in ['app_dashboard_merchant', 'app_dashboard_admin', 'app_dashboard_home'] ? 'active' : '' }}"
        {% if not (current_merchant and current_merchant.id) %}title="Dashboard - merchant context not set"{% endif %}>
         <i class="fas fa-tachometer-alt"></i> Dashboard
     </a>
-    <a href="{% if current_merchant and current_merchant.id %}{{ path('app_financials', {'id': current_merchant.id}) }}{% else %}#{% endif %}"
-       class="sidebar-item {{ app.request.get('_route') starts with 'app_financials' ? 'active' : '' }}"
+
+    <a href="
+    {% if current_merchant and current_merchant.id %}
+        {{ path('app_financials', {'id': current_merchant.id}) }}
+    {% else %}
+        #
+    {% endif %}"
+       class="sidebar-item {{ current_route starts with 'app_financials' ? 'active' : '' }}"
        {% if not (current_merchant and current_merchant.id) %}title="Select a merchant first" style="opacity: 0.6; pointer-events: none;"{% endif %}>
         <i class="fas fa-chart-line"></i> Financials
     </a>
-    <a href="{% if current_merchant and current_merchant.id %}{{ path('app_limits_and_docs', {'id': current_merchant.id}) }}{% else %}#{% endif %}"
-       class="sidebar-item {{ app.request.get('_route') starts with 'app_limits_and_docs' ? 'active' : '' }}"
+
+    <a href="
+    {% if current_merchant and current_merchant.id %}
+        {{ path('app_limits_and_docs', {'id': current_merchant.id}) }}
+    {% else %}
+        #
+    {% endif %}"
+       class="sidebar-item {{ current_route starts with 'app_limits_and_docs' ? 'active' : '' }}"
        {% if not (current_merchant and current_merchant.id) %}title="Select a merchant first" style="opacity: 0.6; pointer-events: none;"{% endif %}>
         <i class="fas fa-file-clipboard"></i> Limits & Documents
     </a>
-    <a href="{% if current_merchant and current_merchant.id %}{{ path('app_reports', {'id': current_merchant.id}) }}{% else %}#{% endif %}"
-       class="sidebar-item {{ app.request.get('_route') starts with 'app_reports' ? 'active' : '' }}"
+
+    <a href="
+    {% if current_merchant and current_merchant.id %}
+        {{ path('app_reports', {'id': current_merchant.id}) }}
+    {% else %}
+        #
+    {% endif %}"
+       class="sidebar-item {{ current_route starts with 'app_reports' ? 'active' : '' }}"
        {% if not (current_merchant and current_merchant.id) %}title="Select a merchant first" style="opacity: 0.6; pointer-events: none;"{% endif %}>
         <i class="fas fa-file-alt"></i> Reports
     </a>

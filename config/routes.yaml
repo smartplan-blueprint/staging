@@ -13,10 +13,19 @@ app_merchant_index:
     controller: App\Controller\SuperAdmin\MerchantController::index
     methods: GET
 
+app_test_email:
+    path: /admin/merchant/test-email
+    controller: App\Controller\SuperAdmin\MerchantController::testEmail
+
 # Main dashboard route
-app_dashboard:
-    path: /dashboard
-    controller: App\Controller\DashboardController::index
+app_admin_dashboard:
+    path: /dashboard/admin
+    controller: App\Controller\DashboardController::adminDashboard
+    methods: GET
+
+app_merchant_dashboard:
+    path: /dashboard/{id}
+    controller: App\Controller\DashboardController::merchantDashboard
     methods: GET
 
 app_merchant_selection:

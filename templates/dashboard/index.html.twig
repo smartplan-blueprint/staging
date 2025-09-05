@@ -1,9 +1,348 @@
+{#{% extends 'base.html.twig' %}#}
+
+{#{% block title %}Merchant Dashboard{% endblock %}#}
+{#{% block breadcrumb %}#}
+{#    <div class="breadcrumb-item">#}
+{#        <a href="{{ path('app_dashboard', {'id': merchant.id}) }}" style="color: #7f8c8d;" class="breadcrumb-link">Dashboard</a>#}
+{#    </div>#}
+{#{% endblock %}#}
+
+{#{% block stylesheets %}#}
+{#    {{ parent() }}#}
+{#    <style>#}
+{#        #dashboard-merchant-name{#}
+{#            color: var(--primary);#}
+{#            text-decoration: none;#}
+{#            font-weight: bold;#}
+
+{#        }#}
+{#        #dashboard-merchant-name:hover{#}
+{#            text-decoration-style: solid;#}
+{#            text-decoration-thickness: 2px;#}
+{#            text-decoration-line: underline;#}
+{#        }#}
+
+{#        #date-range button:hover{#}
+{#            cursor: pointer;#}
+{#        }#}
+
+{#        .header-content {#}
+{#            display: flex;#}
+{#            flex-direction: column;#}
+{#            gap: 5px;#}
+{#        }#}
+
+{#        .merchant-title {#}
+{#            margin: 0;#}
+{#            color: var(--primary);#}
+{#            font-size: 1.5rem;#}
+{#            font-weight: 600;#}
+{#        }#}
+
+{#        .merchant-id {#}
+{#            color: var(--gray);#}
+{#            font-size: 0.9rem;#}
+{#            font-weight: 500;#}
+{#        }#}
+
+{#        .negative-value {#}
+{#            color: #e74c3c;#}
+{#        }#}
+{#    </style>#}
+{#{% endblock %}#}
+
+{#{% block body %}#}
+{#    <div class="dashboard-container">#}
+{#        <!-- Merchant Header -->#}
+{#        <div class="dashboard-card">#}
+{#            <div class="header-content">#}
+{#                <h2 class="merchant-title">#}
+{#                    {% if is_granted('ROLE_SUPER_ADMIN') or is_granted('ROLE_GROUP_ADMIN') %}#}
+{#                        All Merchants Overview#}
+{#                    {% else %}#}
+{#                        {{ app.user.merchant.name }}#}
+{#                    {% endif %}#}
+{#                </h2>#}
+{#                <div class="merchant-id">#}
+{#                    {% if is_granted('ROLE_SUPER_ADMIN') or is_granted('ROLE_GROUP_ADMIN') %}#}
+{#                        Administrator View#}
+{#                    {% else %}#}
+{#                        Merchant ID: {{ app.user.merchant.code }}#}
+{#                    {% endif %}#}
+{#                </div>#}
+{#            </div>#}
+
+{#            <div class="header-content">#}
+{#                <h2 class="merchant-title">{{ app.user.merchant.name }}</h2>#}
+{#                <div class="merchant-id">Merchant ID: {{ app.user.merchant.code }}</div>#}
+{#            </div>#}
+
+{#            <!-- Dates -->#}
+{#            <div style="display: flex; justify-content: space-between; align-items: center;">#}
+{#                <div>#}
+{#                    <span style="font-weight: bold; color: var(--gray);">Date Range:</span>#}
+{#                    <span style="margin-left: 10px;" id="dateRangeDisplay">#}
+{#                        {{ dateRange.display }}#}
+{#                    </span>#}
+{#                </div>#}
+{#                <div id="date-range" style="display: flex; gap: 10px;">#}
+
+{#                    <a href="{{ path('app_dashboard', { 'id': merchant.id, 'range': 'today'}) }}"#}
+{#                       style="padding: 8px 15px; {{ dateRange.currentRange == 'today' ? 'background-color: var(--secondary); color: white;' : 'background-color: var(--light);' }} border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center;">#}
+{#                        Today#}
+{#                    </a>#}
+{#                    <a href="{{ path('app_dashboard', { 'id': merchant.id, 'range': 'week'}) }}"#}
+{#                       style="padding: 8px 15px; {{ dateRange.currentRange == 'week' ? 'background-color: var(--secondary); color: white;' : 'background-color: var(--light);' }} border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center;">#}
+{#                        Last 7 Days#}
+{#                    </a>#}
+{#                    <a href="{{ path('app_dashboard', { 'id': merchant.id, 'range': 'month'}) }}"#}
+{#                       style="padding: 8px 15px; {{ dateRange.currentRange == 'month' ? 'background-color: var(--secondary); color: white;' : 'background-color: var(--light);' }} border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center;">#}
+{#                        Month to Date#}
+{#                    </a>#}
+{#                </div>#}
+
+{#            </div>#}
+{#        </div>#}
+
+{#        <!-- Metrics Grid -->#}
+{#        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px;">#}
+{#            <div class="dashboard-card metric-card opening">#}
+{#                <div style="color: var(--gray); font-size: 14px;">OPENING BALANCE</div>#}
+{#                <div style="font-size: 24px; font-weight: bold; color: var(--dark);">P{{ metricTotals.opening|number_format(2) }}</div>#}
+{#            </div>#}
+
+{#            <div class="dashboard-card metric-card deposits">#}
+{#                <div style="color: var(--gray); font-size: 14px;">DEPOSITS</div>#}
+{#                <div style="font-size: 24px; font-weight: bold; color: var(--dark);">P{{ metricTotals.deposits|number_format(2) }}</div>#}
+{#            </div>#}
+
+{#            <div class="dashboard-card metric-card sales">#}
+{#                <div style="color: var(--gray); font-size: 14px;">SALES</div>#}
+{#                <div style="font-size: 24px; font-weight: bold; color: var(--dark);">P{{ metricTotals.sales|number_format(2) }}</div>#}
+{#            </div>#}
+
+{#            <div class="dashboard-card metric-card commission">#}
+{#                <div style="color: var(--gray); font-size: 14px;">COMMISSION</div>#}
+{#                <div style="font-size: 24px; font-weight: bold; color: var(--dark);">P0.00</div>#}
+{#            </div>#}
+
+{#            <div class="dashboard-card metric-card closing">#}
+{#                <div style="color: var(--gray); font-size: 14px;">CLOSING BALANCE</div>#}
+{#                <div style="font-size: 24px; font-weight: bold;" class="{{ metricTotals.closing < 0 ? 'negative-value' : '' }}">P{{ metricTotals.closing|number_format(2) }}</div>#}
+{#            </div>#}
+{#        </div>#}
+
+{#        <!-- Transaction Summary -->#}
+{#        <div class="dashboard-card">#}
+{#            <h3 style="margin-top: 0; color: var(--primary);">Transaction Summary</h3>#}
+{#            <table style="width: 100%; border-collapse: collapse;">#}
+{#                <thead>#}
+{#                <tr style="background-color: var(--light); text-align: left;">#}
+{#                    <th style="padding: 12px; border-bottom: 2px solid #bdc3c7;">Merchant</th>#}
+{#                    <th style="padding: 12px; border-bottom: 2px solid #bdc3c7;">Opening</th>#}
+{#                    <th style="padding: 12px; border-bottom: 2px solid #bdc3c7;">Deposit</th>#}
+{#                    <th style="padding: 12px; border-bottom: 2px solid #bdc3c7;">Sales</th>#}
+{#                    <th style="padding: 12px; border-bottom: 2px solid #bdc3c7;">Closing</th>#}
+{#                    <th style="padding: 12px; border-bottom: 2px solid #bdc3c7;">Reports</th>#}
+{#                </tr>#}
+{#                </thead>#}
+{#                <tbody>#}
+{#                {% if is_granted('ROLE_SUPER_ADMIN') or is_granted('ROLE_GROUP_ADMIN') %}#}
+{#                    {% for merchantId, group in groupedTransactions %}#}
+{#                        <tr>#}
+{#                            <td id="dashboard-merchant-name" style="padding: 12px; border-bottom: 1px solid var(--light);">#}
+{#                                <a href="{{ path('merchant_details', {'id': group.merchant.id}) }}"#}
+{#                                   style="text-decoration: none;"#}
+{#                                   onmouseover="this.style.textDecoration='underline';"#}
+{#                                   onmouseout="this.style.textDecoration='none'">#}
+{#                                    {{ group.merchant.code }} - {{ group.merchant.name }}#}
+{#                                </a>#}
+{#                            </td>#}
+{#                            <td style="padding: 12px; border-bottom: 1px solid var(--light);">P{{ group.totals.opening|number_format(2) }}</td>#}
+{#                            <td style="padding: 12px; border-bottom: 1px solid var(--light);">P{{ group.totals.deposits|number_format(2) }}</td>#}
+{#                            <td style="padding: 12px; border-bottom: 1px solid var(--light);">P{{ group.totals.sales|number_format(2) }}</td>#}
+{#                            <td style="padding: 12px; border-bottom: 1px solid var(--light);" class="{{ group.totals.closing < 0 ? 'negative-value' : '' }}">#}
+{#                                P{{ group.totals.closing|number_format(2) }}#}
+{#                            </td>#}
+{#                            <td style="padding: 12px; border-bottom: 1px solid var(--light);">#}
+{#                                <button style="padding: 5px 10px; background-color: var(--secondary); color: white; border: none; border-radius: 4px; cursor: pointer;"#}
+{#                                        onclick="toggleTransactions('{{ merchantId }}')">#}
+{#                                    View#}
+{#                                </button>#}
+{#                            </td>#}
+{#                        </tr>#}
+{#                    {% endfor %}#}
+{#                {% else %}#}
+{#                    {% set merchant = app.user.merchant %}#}
+{#                    #}{# Always show the merchant row, even if no data exists in groupedTransactions #}
+{#                    <tr>#}
+{#                        <td id="dashboard-merchant-name" style="padding: 12px; border-bottom: 1px solid var(--light);">#}
+{#                            <a href="{{ path('merchant_details', {'id': merchant.id}) }}"#}
+{#                               style="text-decoration: none;"#}
+{#                               onmouseover="this.style.textDecoration='underline';"#}
+{#                               onmouseout="this.style.textDecoration='none'">#}
+{#                                {{ merchant.code }} - {{ merchant.name }}#}
+{#                            </a>#}
+{#                        </td>#}
+{#                        <td style="padding: 12px; border-bottom: 1px solid var(--light);">#}
+{#                            P{{ (groupedTransactions[merchant.id].totals.opening is defined ? groupedTransactions[merchant.id].totals.opening : 0)|number_format(2) }}#}
+{#                        </td>#}
+{#                        <td style="padding: 12px; border-bottom: 1px solid var(--light);">#}
+{#                            P{{ (groupedTransactions[merchant.id].totals.deposits is defined ? groupedTransactions[merchant.id].totals.deposits : 0)|number_format(2) }}#}
+{#                        </td>#}
+{#                        <td style="padding: 12px; border-bottom: 1px solid var(--light);">#}
+{#                            P{{ (groupedTransactions[merchant.id].totals.sales is defined ? groupedTransactions[merchant.id].totals.sales : 0)|number_format(2) }}#}
+{#                        </td>#}
+{#                        <td style="padding: 12px; border-bottom: 1px solid var(--light);"#}
+{#                            class="{{ (groupedTransactions[merchant.id].totals.closing is defined and groupedTransactions[merchant.id].totals.closing < 0) ? 'negative-value' : '' }}">#}
+{#                            P{{ (groupedTransactions[merchant.id].totals.closing is defined ? groupedTransactions[merchant.id].totals.closing : 0)|number_format(2) }}#}
+{#                        </td>#}
+{#                        <td style="padding: 12px; border-bottom: 1px solid var(--light);">#}
+{#                            <button style="padding: 5px 10px; background-color: var(--secondary); color: white; border: none; border-radius: 4px; cursor: pointer;"#}
+{#                                    onclick="toggleTransactions('{{ merchant.id }}')">#}
+{#                                View#}
+{#                            </button>#}
+{#                        </td>#}
+{#                    </tr>#}
+{#                {% endif %}#}
+{#                </tbody>#}
+{#            </table>#}
+{#        </div>#}
+
+{#        <!-- Charts Row -->#}
+{#        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">#}
+{#            <!-- Balance Flow Chart -->#}
+{#            <div class="dashboard-card">#}
+{#                <h3 style="margin-top: 0; color: var(--primary);">Balance Flow</h3>#}
+{#                <div style="height: 200px; position: relative;">#}
+{#                    <canvas id="balanceFlowChart"></canvas>#}
+{#                </div>#}
+{#            </div>#}
+
+{#            <!-- Daily Performance Chart -->#}
+{#            <div class="dashboard-card">#}
+{#                <h3 style="margin-top: 0; color: var(--primary);">Daily Performance</h3>#}
+{#                <div style="height: 200px; position: relative;">#}
+{#                    <canvas id="dailyPerformanceChart"></canvas>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{#{% endblock %}#}
+
+{#{% block javascripts %}#}
+{#    {{ parent() }}#}
+{#    <script>#}
+{#        document.addEventListener('DOMContentLoaded', function() {#}
+{#            // Chart initialization code remains the same#}
+{#            const balanceCtx = document.getElementById('balanceFlowChart').getContext('2d');#}
+{#            new Chart(balanceCtx, {#}
+{#                type: 'bar',#}
+{#                data: {#}
+{#                    labels: ['Opening', 'Deposits', 'Sales', 'Closing'],#}
+{#                    datasets: [{#}
+{#                        label: 'Amount (P)',#}
+{#                        data: [#}
+{#                            {{ metricTotals.opening|default(0) }},#}
+{#                            {{ metricTotals.deposits|default(0) }},#}
+{#                            {{ metricTotals.sales|default(0) }},#}
+{#                            {{ metricTotals.closing|default(0) }}#}
+{#                        ],#}
+{#                        backgroundColor: [#}
+{#                            'rgba(52, 152, 219, 0.7)',#}
+{#                            'rgba(46, 204, 113, 0.7)',#}
+{#                            'rgba(231, 76, 60, 0.7)',#}
+{#                            'rgba(243, 156, 18, 0.7)'#}
+{#                        ],#}
+{#                        borderWidth: 1#}
+{#                    }]#}
+{#                },#}
+{#                options: {#}
+{#                    responsive: true,#}
+{#                    maintainAspectRatio: false,#}
+{#                    plugins: {#}
+{#                        legend: { display: false },#}
+{#                        tooltip: {#}
+{#                            callbacks: {#}
+{#                                label: function(context) {#}
+{#                                    return 'P' + context.raw.toLocaleString('en-PH', {minimumFractionDigits: 2});#}
+{#                                }#}
+{#                            }#}
+{#                        }#}
+{#                    },#}
+{#                    scales: {#}
+{#                        y: {#}
+{#                            beginAtZero: false,#}
+{#                            ticks: {#}
+{#                                callback: function(value) {#}
+{#                                    return 'P' + value.toLocaleString('en-PH', {minimumFractionDigits: 2});#}
+{#                                }#}
+{#                            }#}
+{#                        }#}
+{#                    }#}
+{#                }#}
+{#            });#}
+
+{#            // Daily Performance Chart#}
+{#            const dailyCtx = document.getElementById('dailyPerformanceChart').getContext('2d');#}
+{#            new Chart(dailyCtx, {#}
+{#                type: 'line',#}
+{#                data: {#}
+{#                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],#}
+{#                    datasets: [{#}
+{#                        label: 'This Week',#}
+{#                        data: [{% for day in range(0, 6) %}{{ random(1000, 5000) }}{% if not loop.last %},{% endif %}{% endfor %}],#}
+{#                        borderColor: 'rgba(52, 152, 219, 1)',#}
+{#                        backgroundColor: 'rgba(52, 152, 219, 0.1)',#}
+{#                        tension: 0.3,#}
+{#                        fill: true#}
+{#                    }]#}
+{#                },#}
+{#                options: {#}
+{#                    responsive: true,#}
+{#                    maintainAspectRatio: false,#}
+{#                    plugins: {#}
+{#                        tooltip: {#}
+{#                            callbacks: {#}
+{#                                label: function(context) {#}
+{#                                    return 'P' + context.raw.toLocaleString('en-PH', {minimumFractionDigits: 2});#}
+{#                                }#}
+{#                            }#}
+{#                        }#}
+{#                    },#}
+{#                    scales: {#}
+{#                        y: {#}
+{#                            ticks: {#}
+{#                                callback: function(value) {#}
+{#                                    return 'P' + value.toLocaleString('en-PH', {minimumFractionDigits: 2});#}
+{#                                }#}
+{#                            }#}
+{#                        }#}
+{#                    }#}
+{#                }#}
+{#            });#}
+{#        });#}
+
+{#        function toggleTransactions(merchantId) {#}
+{#            // Implement your toggle functionality here if needed#}
+{#            console.log('Toggle transactions for merchant:', merchantId);#}
+{#        }#}
+{#    </script>#}
+{#{% endblock %}#}
+
+
 {% extends 'base.html.twig' %}
 
 {% block title %}Merchant Dashboard{% endblock %}
 {% block breadcrumb %}
     <div class="breadcrumb-item">
-        <a href="{{ path('app_dashboard', {'id': merchant.id}) }}" style="color: #7f8c8d;" class="breadcrumb-link">Dashboard</a>
+        <a href="
+        {% if is_granted('ROLE_SUPER_ADMIN') or is_granted('ROLE_GROUP_ADMIN') %}
+            {{ path('app_dashboard_admin') }}
+        {% else %}
+            {{ path('app_dashboard_merchant', {'id': app.user.merchant.id}) }}
+        {% endif %}
+        " style="color: #7f8c8d;" class="breadcrumb-link">Dashboard</a>
     </div>
 {% endblock %}
 
@@ -72,11 +411,6 @@
                 </div>
             </div>
 
-{#            <div class="header-content">#}
-{#                <h2 class="merchant-title">{{ app.user.merchant.name }}</h2>#}
-{#                <div class="merchant-id">Merchant ID: {{ app.user.merchant.code }}</div>#}
-{#            </div>#}
-
             <!-- Dates -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
@@ -87,16 +421,31 @@
                 </div>
                 <div id="date-range" style="display: flex; gap: 10px;">
 
-                    <a href="{{ path('app_dashboard', { 'id': merchant.id, 'range': 'today'}) }}"
-                       style="padding: 8px 15px; {{ dateRange.currentRange == 'today' ? 'background-color: var(--secondary); color: white;' : 'background-color: var(--light);' }} border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center;">
+                    <a href="
+                    {% if is_granted('ROLE_SUPER_ADMIN') or is_granted('ROLE_GROUP_ADMIN') %}
+                        {{ path('app_dashboard_admin', {'range': 'today'}) }}
+                    {% else %}
+                        {{ path('app_dashboard_merchant', {'id': app.user.merchant.id, 'range': 'today'}) }}
+                    {% endif %}
+                    " style="padding: 8px 15px; {{ dateRange.currentRange == 'today' ? 'background-color: var(--secondary); color: white;' : 'background-color: var(--light);' }} border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center;">
                         Today
                     </a>
-                    <a href="{{ path('app_dashboard', { 'id': merchant.id, 'range': 'week'}) }}"
-                       style="padding: 8px 15px; {{ dateRange.currentRange == 'week' ? 'background-color: var(--secondary); color: white;' : 'background-color: var(--light);' }} border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center;">
+                    <a href="
+                    {% if is_granted('ROLE_SUPER_ADMIN') or is_granted('ROLE_GROUP_ADMIN') %}
+                        {{ path('app_dashboard_admin', {'range': 'week'}) }}
+                    {% else %}
+                        {{ path('app_dashboard_merchant', {'id': app.user.merchant.id, 'range': 'week'}) }}
+                    {% endif %}
+                    " style="padding: 8px 15px; {{ dateRange.currentRange == 'week' ? 'background-color: var(--secondary); color: white;' : 'background-color: var(--light);' }} border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center;">
                         Last 7 Days
                     </a>
-                    <a href="{{ path('app_dashboard', { 'id': merchant.id, 'range': 'month'}) }}"
-                       style="padding: 8px 15px; {{ dateRange.currentRange == 'month' ? 'background-color: var(--secondary); color: white;' : 'background-color: var(--light);' }} border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center;">
+                    <a href="
+                    {% if is_granted('ROLE_SUPER_ADMIN') or is_granted('ROLE_GROUP_ADMIN') %}
+                        {{ path('app_dashboard_admin', {'range': 'month'}) }}
+                    {% else %}
+                        {{ path('app_dashboard_merchant', {'id': app.user.merchant.id, 'range': 'month'}) }}
+                    {% endif %}
+                    " style="padding: 8px 15px; {{ dateRange.currentRange == 'month' ? 'background-color: var(--secondary); color: white;' : 'background-color: var(--light);' }} border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center;">
                         Month to Date
                     </a>
                 </div>
@@ -174,31 +523,36 @@
                     {% endfor %}
                 {% else %}
                     {% set merchant = app.user.merchant %}
-                    {% if groupedTransactions[merchant.id] is defined %}
-                        {% set group = groupedTransactions[merchant.id] %}
-                        <tr>
-                            <td id="dashboard-merchant-name" style="padding: 12px; border-bottom: 1px solid var(--light);">
-                                <a href="{{ path('merchant_details', {'id': merchant.id}) }}"
-                                   style="text-decoration: none;"
-                                   onmouseover="this.style.textDecoration='underline';"
-                                   onmouseout="this.style.textDecoration='none'">
-                                    {{ merchant.code }} - {{ merchant.name }}
-                                </a>
-                            </td>
-                            <td style="padding: 12px; border-bottom: 1px solid var(--light);">P{{ group.totals.opening|number_format(2) }}</td>
-                            <td style="padding: 12px; border-bottom: 1px solid var(--light);">P{{ group.totals.deposits|number_format(2) }}</td>
-                            <td style="padding: 12px; border-bottom: 1px solid var(--light);">P{{ group.totals.sales|number_format(2) }}</td>
-                            <td style="padding: 12px; border-bottom: 1px solid var(--light);" class="{{ group.totals.closing < 0 ? 'negative-value' : '' }}">
-                                P{{ group.totals.closing|number_format(2) }}
-                            </td>
-                            <td style="padding: 12px; border-bottom: 1px solid var(--light);">
-                                <button style="padding: 5px 10px; background-color: var(--secondary); color: white; border: none; border-radius: 4px; cursor: pointer;"
-                                        onclick="toggleTransactions('{{ merchant.id }}')">
-                                    View
-                                </button>
-                            </td>
-                        </tr>
-                    {% endif %}
+                    {# Always show the merchant row, even if no data exists in groupedTransactions #}
+                    <tr>
+                        <td id="dashboard-merchant-name" style="padding: 12px; border-bottom: 1px solid var(--light);">
+                            <a href="{{ path('merchant_details', {'id': merchant.id}) }}"
+                               style="text-decoration: none;"
+                               onmouseover="this.style.textDecoration='underline';"
+                               onmouseout="this.style.textDecoration='none'">
+                                {{ merchant.code }} - {{ merchant.name }}
+                            </a>
+                        </td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--light);">
+                            P{{ (groupedTransactions[merchant.id].totals.opening is defined ? groupedTransactions[merchant.id].totals.opening : 0)|number_format(2) }}
+                        </td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--light);">
+                            P{{ (groupedTransactions[merchant.id].totals.deposits is defined ? groupedTransactions[merchant.id].totals.deposits : 0)|number_format(2) }}
+                        </td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--light);">
+                            P{{ (groupedTransactions[merchant.id].totals.sales is defined ? groupedTransactions[merchant.id].totals.sales : 0)|number_format(2) }}
+                        </td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--light);"
+                            class="{{ (groupedTransactions[merchant.id].totals.closing is defined and groupedTransactions[merchant.id].totals.closing < 0) ? 'negative-value' : '' }}">
+                            P{{ (groupedTransactions[merchant.id].totals.closing is defined ? groupedTransactions[merchant.id].totals.closing : 0)|number_format(2) }}
+                        </td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--light);">
+                            <button style="padding: 5px 10px; background-color: var(--secondary); color: white; border: none; border-radius: 4px; cursor: pointer;"
+                                    onclick="toggleTransactions('{{ merchant.id }}')">
+                                View
+                            </button>
+                        </td>
+                    </tr>
                 {% endif %}
                 </tbody>
             </table>
@@ -324,278 +678,3 @@
         }
     </script>
 {% endblock %}
-
-
-{#{% extends 'base.html.twig' %}#}
-
-{#{% block title %}Merchant Dashboard{% endblock %}#}
-
-{#{% block stylesheets %}#}
-{#    {{ parent() }}#}
-{#    <style>#}
-{#        #dashboard-merchant-name{#}
-{#            color: var(--primary);#}
-{#                    text-decoration: none;#}
-{#                    font-weight: bold;#}
-
-{#        }#}
-{#                #dashboard-merchant-name:hover{#}
-{#                    text-decoration-style: solid;#}
-{#                    text-decoration-thickness: 2px;#}
-{#                    text-decoration-line: underline;#}
-{#                }#}
-
-{#                #date-range button:hover{#}
-{#                    cursor: pointer;#}
-{#                }#}
-
-{#                .header-content {#}
-{#                    display: flex;#}
-{#                    flex-direction: column;#}
-{#                    gap: 5px;#}
-{#                }#}
-
-{#                .merchant-title {#}
-{#                    margin: 0;#}
-{#                    color: var(--primary);#}
-{#                    font-size: 1.5rem;#}
-{#                    font-weight: 600;#}
-{#                }#}
-
-{#                .merchant-id {#}
-{#                    color: var(--gray);#}
-{#                    font-size: 0.9rem;#}
-{#                    font-weight: 500;#}
-{#                }#}
-
-{#                .negative-value {#}
-{#                    color: #e74c3c;#}
-{#                }#}
-{#    </style>#}
-{#{% endblock %}#}
-
-{#{% block body %}#}
-{#    <div class="dashboard-container">#}
-{#        <!-- Merchant Header -->#}
-{#        <div class="dashboard-card">#}
-{#            <div class="header-content">#}
-{#                <h2 class="merchant-title">{{ merchant.name }}</h2>#}
-{#                <div class="merchant-id">Merchant ID: {{ merchant.code }}</div>#}
-{#            </div>#}
-{#            <!-- Dates -->#}
-{#            <div style="display: flex; justify-content: space-between; align-items: center;">#}
-{#                <div>#}
-{#                    <span style="font-weight: bold; color: var(--gray);">Date Range:</span>#}
-{#                    <span style="margin-left: 10px;" id="dateRangeDisplay">#}
-{#                        {{ dateRange.display }}#}
-{#                    </span>#}
-{#                </div>#}
-{#                <div id="date-range" style="display: flex; gap: 10px;">#}
-
-{#                    <a href="{{ path('app_dashboard', {'range': 'today'}) }}"#}
-{#                       style="padding: 8px 15px; {{ dateRange.currentRange == 'today' ? 'background-color: var(--secondary); color: white;' : 'background-color: var(--light);' }} border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center;">#}
-{#                        Today#}
-{#                    </a>#}
-{#                    <a href="{{ path('app_dashboard', {'range': 'week'}) }}"#}
-{#                       style="padding: 8px 15px; {{ dateRange.currentRange == 'week' ? 'background-color: var(--secondary); color: white;' : 'background-color: var(--light);' }} border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center;">#}
-{#                    Last 7 Days#}
-{#                    </a>#}
-{#                    <a href="{{ path('app_dashboard', {'range': 'month'}) }}"#}
-{#                       style="padding: 8px 15px; {{ dateRange.currentRange == 'month' ? 'background-color: var(--secondary); color: white;' : 'background-color: var(--light);' }} border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center;">#}
-{#                    Month to Date#}
-{#                    </a>#}
-{#                </div>#}
-{#            </div>#}
-{#        </div>#}
-
-{#        <!-- Metrics Grid -->#}
-{#        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px;">#}
-{#            <div class="dashboard-card metric-card opening">#}
-{#                <div style="color: var(--gray); font-size: 14px;">OPENING BALANCE</div>#}
-{#                <div style="font-size: 24px; font-weight: bold; color: var(--dark);">P{{ metricTotals.opening|number_format(2) }}</div>#}
-{#            </div>#}
-
-{#            <div class="dashboard-card metric-card deposits">#}
-{#                <div style="color: var(--gray); font-size: 14px;">DEPOSITS</div>#}
-{#                <div style="font-size: 24px; font-weight: bold; color: var(--dark);">P{{ metricTotals.deposits|number_format(2) }}</div>#}
-{#            </div>#}
-
-{#            <div class="dashboard-card metric-card sales">#}
-{#                <div style="color: var(--gray); font-size: 14px;">SALES</div>#}
-{#                <div style="font-size: 24px; font-weight: bold; color: var(--dark);">P{{ metricTotals.sales|number_format(2) }}</div>#}
-{#            </div>#}
-
-{#            <div class="dashboard-card metric-card commission">#}
-{#                <div style="color: var(--gray); font-size: 14px;">COMMISSION</div>#}
-{#                <div style="font-size: 24px; font-weight: bold; color: var(--dark);">P0.00</div>#}
-{#            </div>#}
-
-{#            <div class="dashboard-card metric-card closing">#}
-{#                <div style="color: var(--gray); font-size: 14px;">CLOSING BALANCE</div>#}
-{#                <div style="font-size: 24px; font-weight: bold;" class="{{ metricTotals.closing < 0 ? 'negative-value' : '' }}">P{{ metricTotals.closing|number_format(2) }}</div>#}
-{#            </div>#}
-{#        </div>#}
-
-{#        <!-- Transaction Summary -->#}
-{#        <div class="dashboard-card">#}
-{#            <h3 style="margin-top: 0; color: var(--primary);">Transaction Summary</h3>#}
-{#            <table style="width: 100%; border-collapse: collapse;">#}
-{#                <thead>#}
-{#                <tr style="background-color: var(--light); text-align: left;">#}
-{#                    <th style="padding: 12px; border-bottom: 2px solid #bdc3c7;">Merchant</th>#}
-{#                    <th style="padding: 12px; border-bottom: 2px solid #bdc3c7;">Opening</th>#}
-{#                    <th style="padding: 12px; border-bottom: 2px solid #bdc3c7;">Deposit</th>#}
-{#                    <th style="padding: 12px; border-bottom: 2px solid #bdc3c7;">Sales</th>#}
-{#                    <th style="padding: 12px; border-bottom: 2px solid #bdc3c7;">Closing</th>#}
-{#                    <th style="padding: 12px; border-bottom: 2px solid #bdc3c7;">Reports</th>#}
-{#                </tr>#}
-{#                </thead>#}
-{#                <tbody>#}
-{#                {% for merchantId, group in groupedTransactions %}#}
-{#                    <tr>#}
-{#                        <td id="dashboard-merchant-name" style="padding: 12px; border-bottom: 1px solid var(--light);">#}
-{#                            <a href="{{ path('merchant_details', {'id': group.merchant.id}) }}"#}
-{#                               style="text-decoration: none;"#}
-{#                               onmouseover="this.style.textDecoration='underline';"#}
-{#                               onmouseout="this.style.textDecoration='none'">#}
-{#                                {{ group.merchant.code }} - {{ group.merchant.name }}#}
-{#                            </a>#}
-{#                        </td>#}
-{#                        <td style="padding: 12px; border-bottom: 1px solid var(--light);">P{{ group.totals.opening|number_format(2) }}</td>#}
-{#                        <td style="padding: 12px; border-bottom: 1px solid var(--light);">P{{ group.totals.deposits|number_format(2) }}</td>#}
-{#                        <td style="padding: 12px; border-bottom: 1px solid var(--light);">P{{ group.totals.sales|number_format(2) }}</td>#}
-{#                        <td style="padding: 12px; border-bottom: 1px solid var(--light);" class="{{ group.totals.closing < 0 ? 'negative-value' : '' }}">#}
-{#                            P{{ group.totals.closing|number_format(2) }}#}
-{#                        </td>#}
-{#                        <td style="padding: 12px; border-bottom: 1px solid var(--light);">#}
-{#                            <button style="padding: 5px 10px; background-color: var(--secondary); color: white; border: none; border-radius: 4px; cursor: pointer;"#}
-{#                                    onclick="toggleTransactions('{{ merchantId }}')">#}
-{#                                View#}
-{#                            </button>#}
-{#                        </td>#}
-{#                    </tr>#}
-{#                {% endfor %}#}
-{#                </tbody>#}
-{#            </table>#}
-{#        </div>#}
-
-{#        <!-- Charts Row -->#}
-{#        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">#}
-{#            <!-- Balance Flow Chart -->#}
-{#            <div class="dashboard-card">#}
-{#                <h3 style="margin-top: 0; color: var(--primary);">Balance Flow</h3>#}
-{#                <div style="height: 200px; position: relative;">#}
-{#                    <canvas id="balanceFlowChart"></canvas>#}
-{#                </div>#}
-{#            </div>#}
-
-{#            <!-- Daily Performance Chart -->#}
-{#            <div class="dashboard-card">#}
-{#                <h3 style="margin-top: 0; color: var(--primary);">Daily Performance</h3>#}
-{#                <div style="height: 200px; position: relative;">#}
-{#                    <canvas id="dailyPerformanceChart"></canvas>#}
-{#                </div>#}
-{#            </div>#}
-{#        </div>#}
-{#    </div>#}
-{#{% endblock %}#}
-
-{#{% block javascripts %}#}
-{#    {{ parent() }}#}
-{#    <script>#}
-{#        document.addEventListener('DOMContentLoaded', function() {#}
-{#            // Chart initialization code remains the same#}
-{#            const balanceCtx = document.getElementById('balanceFlowChart').getContext('2d');#}
-{#            new Chart(balanceCtx, {#}
-{#                type: 'bar',#}
-{#                data: {#}
-{#                    labels: ['Opening', 'Deposits', 'Sales', 'Closing'],#}
-{#                    datasets: [{#}
-{#                        label: 'Amount (P)',#}
-{#                        data: [#}
-{#                            {{ metricTotals.opening|default(0) }},#}
-{#                            {{ metricTotals.deposits|default(0) }},#}
-{#                            {{ metricTotals.sales|default(0) }},#}
-{#                            {{ metricTotals.closing|default(0) }}#}
-{#                        ],#}
-{#                        backgroundColor: [#}
-{#                            'rgba(52, 152, 219, 0.7)',#}
-{#                            'rgba(46, 204, 113, 0.7)',#}
-{#                            'rgba(231, 76, 60, 0.7)',#}
-{#                            'rgba(243, 156, 18, 0.7)'#}
-{#                        ],#}
-{#                        borderWidth: 1#}
-{#                    }]#}
-{#                },#}
-{#                options: {#}
-{#                    responsive: true,#}
-{#                    maintainAspectRatio: false,#}
-{#                    plugins: {#}
-{#                        legend: { display: false },#}
-{#                        tooltip: {#}
-{#                            callbacks: {#}
-{#                                label: function(context) {#}
-{#                                    return 'P' + context.raw.toLocaleString('en-PH', {minimumFractionDigits: 2});#}
-{#                                }#}
-{#                            }#}
-{#                        }#}
-{#                    },#}
-{#                    scales: {#}
-{#                        y: {#}
-{#                            beginAtZero: false,#}
-{#                            ticks: {#}
-{#                                callback: function(value) {#}
-{#                                    return 'P' + value.toLocaleString('en-PH', {minimumFractionDigits: 2});#}
-{#                                }#}
-{#                            }#}
-{#                        }#}
-{#                    }#}
-{#                }#}
-{#            });#}
-
-{#            // Daily Performance Chart#}
-{#            const dailyCtx = document.getElementById('dailyPerformanceChart').getContext('2d');#}
-{#            new Chart(dailyCtx, {#}
-{#                type: 'line',#}
-{#                data: {#}
-{#                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],#}
-{#                    datasets: [{#}
-{#                        label: 'This Week',#}
-{#                        data: [{% for day in range(0, 6) %}{{ random(1000, 5000) }}{% if not loop.last %},{% endif %}{% endfor %}],#}
-{#                        borderColor: 'rgba(52, 152, 219, 1)',#}
-{#                        backgroundColor: 'rgba(52, 152, 219, 0.1)',#}
-{#                        tension: 0.3,#}
-{#                        fill: true#}
-{#                    }]#}
-{#                },#}
-{#                options: {#}
-{#                    responsive: true,#}
-{#                    maintainAspectRatio: false,#}
-{#                    plugins: {#}
-{#                        tooltip: {#}
-{#                            callbacks: {#}
-{#                                label: function(context) {#}
-{#                                    return 'P' + context.raw.toLocaleString('en-PH', {minimumFractionDigits: 2});#}
-{#                                }#}
-{#                            }#}
-{#                        }#}
-{#                    },#}
-{#                    scales: {#}
-{#                        y: {#}
-{#                            ticks: {#}
-{#                                callback: function(value) {#}
-{#                                    return 'P' + value.toLocaleString('en-PH', {minimumFractionDigits: 2});#}
-{#                                }#}
-{#                            }#}
-{#                        }#}
-{#                    }#}
-{#                }#}
-{#            });#}
-{#        });#}
-
-{#        function toggleTransactions(merchantId) {#}
-{#            // Implement your toggle functionality here if needed#}
-{#            console.log('Toggle transactions for merchant:', merchantId);#}
-{#        }#}
-{#    </script>#}
-{#{% endblock %}#}

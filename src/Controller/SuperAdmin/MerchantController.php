@@ -381,24 +381,115 @@ class MerchantController extends AbstractController
     /**
      * Send welcome email with temporary password
      */
-    private function sendWelcomeEmail(string $email, string $name, string $password, string $merchantName): void
+
+//    private function sendWelcomeEmail(string $email, string $name, string $password, string $merchantName): bool
+//    {
+//        try {
+//            // Validate email address
+//            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+//                error_log("Invalid email address: $email");
+//                return false;
+//            }
+//
+//            // Create email content with fallback if template doesn't exist
+//            try {
+//                $htmlContent = $this->renderView('emails/merchant_welcome.html.twig', [
+//                    'name' => $name,
+//                    'email' => $email,
+//                    'password' => $password,
+//                    'merchantName' => $merchantName
+//                ]);
+//            } catch (\Exception $templateError) {
+//                // Fallback to simple email content
+//                error_log('Email template not found, using fallback: ' . $templateError->getMessage());
+//                $htmlContent = "
+//                <h2>Welcome to Smart Plan Blueprint</h2>
+//                <p>Hello $name,</p>
+//                <p>Your merchant account for <strong>$merchantName</strong> has been created!</p>
+//                <p><strong>Email:</strong> $email</p>
+//                <p><strong>Temporary Password:</strong> $password</p>
+//                <p>Login at: https://portal.smartplanblueprint.com/login</p>
+//                <p>Please change your password after first login.</p>
+//            ";
+//            }
+//
+//            $emailMessage = (new Email())
+//                ->from(new Address('no-reply@smartplanblueprint.com', 'Smart Plan Blueprint'))
+//                ->to($email)
+//                ->subject("Your $merchantName Merchant Account - Login Details")
+//                ->html($htmlContent);
+//
+//            $this->mailer->send($emailMessage);
+//
+//            error_log("Welcome email successfully sent to: $email");
+//            return true;
+//
+//        } catch (\Exception $e) {
+//            error_log('Failed to send welcome email to ' . $email . ': ' . $e->getMessage());
+//            return false;
+//        }
+//    }
+
+    private function sendWelcomeEmail(string $email, string $name, string $password, string $merchantName): bool
     {
         try {
+            // Validate email address
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                error_log("Invalid email address: $email");
+                return false;
+            }
+
+            // Debug: Log that we're attempting to send
+            error_log("Attempting to send email to: $email");
+
+            // Create email content
+            $htmlContent = $this->renderView('emails/merchant_welcome.html.twig', [
+                'name' => $name,
+                'email' => $email,
+                'password' => $password,
+                'merchantName' => $merchantName
+            ]);
+
             $emailMessage = (new Email())
                 ->from(new Address('no-reply@smartplanblueprint.com', 'Smart Plan Blueprint'))
                 ->to($email)
-                ->subject('Your Merchant Account Login Details')
-                ->html($this->renderView('emails/merchant_welcome.html.twig', [
-                    'name' => $name,
-                    'email' => $email,
-                    'password' => $password,
-                    'merchantName' => $merchantName
-                ]));
+                ->subject("Your $merchantName Merchant Account - Login Details")
+                ->html($htmlContent);
+
+            // Add debug headers for testing
+            $emailMessage->getHeaders()->addTextHeader('X-Debug', 'MerchantWelcomeEmail');
 
             $this->mailer->send($emailMessage);
+
+            error_log("Welcome email successfully sent to: $email");
+            return true;
+
         } catch (\Exception $e) {
-            // Log the error but don't break the merchant creation process
-            error_log('Failed to send welcome email: ' . $e->getMessage());
+            // More detailed error logging
+            error_log('Email sending failed:');
+            error_log('Recipient: ' . $email);
+            error_log('Error: ' . $e->getMessage());
+            error_log('Trace: ' . $e->getTraceAsString());
+
+            return false;
+        }
+    }
+
+    #[Route('/test-email', name: 'test_email')]
+    public function testEmail(): Response
+    {
+        try {
+            $email = (new Email())
+                ->from('no-reply@smartplanblueprint.com')
+                ->to('l.matekenya9@gmail.com') // Use a real email for testing
+                ->subject('Test Email')
+                ->text('This is a test email from Symfony Mailer');
+
+            $this->mailer->send($email);
+
+            return new Response('Test email sent successfully!');
+        } catch (\Exception $e) {
+            return new Response('Email failed: ' . $e->getMessage());
         }
     }
 
@@ -512,20 +603,76 @@ class MerchantController extends AbstractController
 
     // Add this method to your MerchantController
 
+//    #[Route('/{id}/regenerate-password', name: 'app_merchant_regenerate_password', methods: ['POST'])]
+//    public function regeneratePassword(Request $request, Merchant $merchant, EntityManagerInterface $entityManager): Response
+//    {
+//        if (!$this->isCsrfTokenValid('regenerate-password' . $merchant->getId(), $request->request->get('_token'))) {
+//            return $this->redirectToRoute('app_merchant_view', ['id' => $merchant->getId()]);
+//        }
+//
+//        try {
+//            // Find the admin user for this merchant
+//            $userRepository = $entityManager->getRepository(User::class);
+//            $adminUser = $userRepository->findOneBy([
+//                'merchant' => $merchant,
+//                'roles' => ['ROLE_ADMIN']
+//            ]);
+//
+//            if (!$adminUser) {
+//                $this->addFlash('error', 'No admin user found for this merchant.');
+//                return $this->redirectToRoute('app_merchant_view', ['id' => $merchant->getId()]);
+//            }
+//
+//            // Generate new temporary password
+//            $newPassword = $this->generateTemporaryPassword();
+//
+//            // Hash and set the new password
+//            $hashedPassword = $this->passwordHasher->hashPassword($adminUser, $newPassword);
+//            $adminUser->setPassword($hashedPassword);
+//            $adminUser->setIsTempPassword(true);
+//            $adminUser->setPasswordChangedAt(null);
+//
+//            $entityManager->flush();
+//
+//            // Send email with new password
+//            $merchantDetails = $merchant->getMerchantDetails();
+//            $this->sendPasswordResetEmail(
+//                $merchantDetails->getContactEmail(),
+//                $merchantDetails->getContactName(),
+//                $newPassword,
+//                $merchant->getName()
+//            );
+//
+//            $this->addFlash('success', 'New password generated and sent to the merchant admin.');
+//
+//        } catch (\Exception $e) {
+//            $this->addFlash('error', 'Failed to regenerate password: ' . $e->getMessage());
+//        }
+//
+//        return $this->redirectToRoute('app_merchant_view', ['id' => $merchant->getId()]);
+//    }
+
     #[Route('/{id}/regenerate-password', name: 'app_merchant_regenerate_password', methods: ['POST'])]
-    public function regeneratePassword(Request $request, Merchant $merchant, EntityManagerInterface $entityManager): Response
+    public function regeneratePassword(Request $request, Merchant $merchant, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
     {
         if (!$this->isCsrfTokenValid('regenerate-password' . $merchant->getId(), $request->request->get('_token'))) {
             return $this->redirectToRoute('app_merchant_view', ['id' => $merchant->getId()]);
         }
 
         try {
-            // Find the admin user for this merchant
+            // Find the admin user for this merchant - FIXED QUERY
             $userRepository = $entityManager->getRepository(User::class);
-            $adminUser = $userRepository->findOneBy([
-                'merchant' => $merchant,
-                'roles' => ['ROLE_ADMIN']
-            ]);
+
+            // Get all users for this merchant and filter for admin role
+            $users = $userRepository->findBy(['merchant' => $merchant]);
+            $adminUser = null;
+
+            foreach ($users as $user) {
+                if (in_array('ROLE_ADMIN', $user->getRoles(), true)) {
+                    $adminUser = $user;
+                    break;
+                }
+            }
 
             if (!$adminUser) {
                 $this->addFlash('error', 'No admin user found for this merchant.');
@@ -533,26 +680,25 @@ class MerchantController extends AbstractController
             }
 
             // Generate new temporary password
-            $newPassword = $this->generateTemporaryPassword();
+            $newPassword = bin2hex(random_bytes(8)); // Generate 16-character password
 
             // Hash and set the new password
-            $hashedPassword = $this->passwordHasher->hashPassword($adminUser, $newPassword);
+            $hashedPassword = $passwordHasher->hashPassword($adminUser, $newPassword);
             $adminUser->setPassword($hashedPassword);
             $adminUser->setIsTempPassword(true);
             $adminUser->setPasswordChangedAt(null);
 
             $entityManager->flush();
 
-            // Send email with new password
+            // Send email with new password - you'll need to implement this method
             $merchantDetails = $merchant->getMerchantDetails();
-            $this->sendPasswordResetEmail(
-                $merchantDetails->getContactEmail(),
-                $merchantDetails->getContactName(),
-                $newPassword,
-                $merchant->getName()
-            );
-
-            $this->addFlash('success', 'New password generated and sent to the merchant admin.');
+            if ($merchantDetails && $merchantDetails->getContactEmail()) {
+                // Implement your email sending logic here
+                // $this->sendPasswordResetEmail($merchantDetails->getContactEmail(), $merchantDetails->getContactName(), $newPassword, $merchant->getName());
+                $this->addFlash('success', 'New password generated: ' . $newPassword . ' (Email functionality to be implemented)');
+            } else {
+                $this->addFlash('success', 'New password generated: ' . $newPassword . ' - No contact email available to send notification');
+            }
 
         } catch (\Exception $e) {
             $this->addFlash('error', 'Failed to regenerate password: ' . $e->getMessage());
@@ -571,7 +717,7 @@ class MerchantController extends AbstractController
                 ->from(new Address('no-reply@smartplanblueprint.com', 'Smart Plan Blueprint'))
                 ->to($email)
                 ->subject('Your Password Has Been Reset')
-                ->html($this->renderView('emails/password_reset.html.twig', [
+                ->html($this->renderView('emails/reset.html.twig', [
                     'name' => $name,
                     'email' => $email,
                     'password' => $password,

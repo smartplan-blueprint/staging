@@ -78,7 +78,7 @@ class Merchant
      * @ORM\OneToMany(targetEntity="App\Entity\Agreement", mappedBy="merchant")
      */
     private $agreements;
-
+    #[ORM\OneToMany(mappedBy: 'merchant', targetEntity: User::class, cascade: ['persist', 'remove'])]
     private Collection $users;
 
     // Getters and setters...

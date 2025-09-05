@@ -165,15 +165,18 @@
             <div class="dashboard-card">
 
                 <div class="action-dropdown">
+                    {# Get the current merchant ID from URL parameters or session #}
+                    {% set current_merchant_id = app.request.get('id') ?? (app.session.get('current_merchant') ? app.session.get('current_merchant').id : (merchant is defined ? merchant.id : null)) %}
+
                     <select class="action-select" id="actionSelect" onchange="handleFilterChange(this)">
                         <option value="">Filter By</option>
-                        <option value="{{ path('app_financials', {'id': merchant.id}) }}" {{ app.request.attributes.get('_route') == 'app_financials' ? 'selected' : '' }}>Sales</option>
-                        <option value="{{ path('financials_commission', {'id': merchant.id}) }}" {{ app.request.attributes.get('_route') == 'financials_commission' ? 'selected' : '' }}>Commission</option>
-                        <option value="{{ path('financials_deposits', {'id': merchant.id}) }}" {{ app.request.attributes.get('_route') == 'financials_deposits' ? 'selected' : '' }}>Deposits</option>
-                        <option value="{{ path('financials_reversals', {'id': merchant.id}) }}" {{ app.request.attributes.get('_route') == 'financials_reversals' ? 'selected' : '' }}>Reversals</option>
-                        <option value="{{ path('financials_withdrawals', {'id': merchant.id}) }}" {{ app.request.attributes.get('_route') == 'financials_withdrawals' ? 'selected' : '' }}>Withdrawals</option>
-                        <option value="{{ path('financials_transfers', {'id': merchant.id}) }}" {{ app.request.attributes.get('_route') == 'financials_transfers' ? 'selected' : '' }}>Transfers</option>
-                        <option value="{{ path('financials_summary', {'id': merchant.id}) }}" {{ app.request.attributes.get('_route') == 'financials_summary' ? 'selected' : '' }}>Summary</option>
+                        <option value="{{ path('app_financials', {'id': current_merchant_id}) }}" {{ app.request.attributes.get('_route') == 'app_financials' ? 'selected' : '' }}>Sales</option>
+                        <option value="{{ path('financials_commission', {'id': current_merchant_id}) }}" {{ app.request.attributes.get('_route') == 'financials_commission' ? 'selected' : '' }}>Commission</option>
+                        <option value="{{ path('financials_deposits', {'id': current_merchant_id}) }}" {{ app.request.attributes.get('_route') == 'financials_deposits' ? 'selected' : '' }}>Deposits</option>
+                        <option value="{{ path('financials_reversals', {'id': current_merchant_id}) }}" {{ app.request.attributes.get('_route') == 'financials_reversals' ? 'selected' : '' }}>Reversals</option>
+                        <option value="{{ path('financials_withdrawals', {'id': current_merchant_id}) }}" {{ app.request.attributes.get('_route') == 'financials_withdrawals' ? 'selected' : '' }}>Withdrawals</option>
+                        <option value="{{ path('financials_transfers', {'id': current_merchant_id}) }}" {{ app.request.attributes.get('_route') == 'financials_transfers' ? 'selected' : '' }}>Transfers</option>
+                        <option value="{{ path('financials_summary', {'id': current_merchant_id}) }}" {{ app.request.attributes.get('_route') == 'financials_summary' ? 'selected' : '' }}>Summary</option>
                     </select>
                 </div>
 
@@ -289,24 +292,40 @@
             //     return formatted.replace(/(\d+)/, `$1${suffix}`);
             // }
 
-            function handleFilterChange(select) {
-                if (select.value) {
-                    // Get current query parameters
-                    const queryParams = window.location.search;
-                    // Navigate to selected URL with preserved parameters
-                    window.location.href = select.value + queryParams;
+            // function handleFilterChange(select) {
+            //     if (select.value) {
+            //         // Get current query parameters
+            //         const queryParams = window.location.search;
+            //         // Navigate to selected URL with preserved parameters
+            //         window.location.href = select.value + queryParams;
+            //     }
+            // }
+            //
+            // // Initialize with today's date
+            // document.addEventListener('DOMContentLoaded', function() {
+            //     setDateRange('today');
+            //
+            //     document.getElementById('actionSelect').addEventListener('change', function() {
+            //         if (this.value) {
+            //             window.location.href = this.value;
+            //         }
+            //     });
+            // });
+
+            function handleFilterChange(selectElement) {
+                if (selectElement.value) {
+                    window.location.href = selectElement.value;
                 }
             }
-
             // Initialize with today's date
             document.addEventListener('DOMContentLoaded', function() {
                 setDateRange('today');
+            });
 
-                document.getElementById('actionSelect').addEventListener('change', function() {
-                    if (this.value) {
-                        window.location.href = this.value;
-                    }
-                });
+            document.getElementById('actionSelect').addEventListener('change', function() {
+                if (this.value) {
+                    window.location.href = this.value;
+                }
             });
         </script>
     {% endblock %}

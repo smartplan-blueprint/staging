@@ -38,56 +38,57 @@ jobs:
             -- \
               . ":(exclude).github" ":(exclude)node_modules" ":(exclude)tests" ":(exclude)var"
 
+
       - name: SSH agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      # (1) Optional: quick connectivity check with clear error
+     # (1) Optional: quick connectivity check with clear error
       - name: Check SSH connectivity
         run:  |
           H="${{ secrets.SSH_HOST }}"; P="${{ secrets.SSH_PORT }}"
           echo "Testing TCP to $H:$P ..."
           timeout 5 bash -lc ">/dev/tcp/$H/$P" && echo "✅ Reachable" || (echo "❌ Unreachable"; exit 1)
 
-      # (2) Try to fetch the host key, but don't fail the job if it times out
+# (2) Try to fetch the host key, but don't fail the job if it times out
       - name: Trust host (best-effort)
         run: |
           mkdir -p ~/.ssh
           # Prefer IPv4, 15s timeout; ignore failure so the next steps can still proceed
           ssh-keyscan -4 -T 15 -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts || true
 
-      # (3) Upload (skip strict host checking so we don't depend on keyscan)
+# (3) Upload (skip strict host checking so we don't depend on keyscan)
       - name: Upload release
         run: |
           scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
               -P "${{ secrets.SSH_PORT }}" release.tgz \
               "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/${RELEASE}.tgz"
 
-      # (4) Remote deploy (same relaxed options)
+# (4) Remote deploy (same relaxed options)
       - name: Remote deploy
         env:
-          RELEASE: ${{ env.RELEASE }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          SUDO_PASSWORD: ${{ secrets.SUDO_PASSWORD }}
+            RELEASE: ${{ env.RELEASE }}
+            DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+              -p "${{ secrets.SSH_PORT }}" \
+              "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" bash -s <<'EOSSH'
+
+      - name: Upload release
+        run: |
+          scp -P ${{ secrets.SSH_PORT }} release.tgz ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/${RELEASE}.tgz
+
+      - name: Remote deploy
         run: |
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
               -p "${{ secrets.SSH_PORT }}" \
               "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-              "DEPLOY_PATH='${{ secrets.DEPLOY_PATH }}' RELEASE='${{ env.RELEASE }}' SUDO_PASSWORD='${{ secrets.SUDO_PASSWORD }}' bash -s" << 'EOSSH'
+              "DEPLOY_PATH='${{ secrets.DEPLOY_PATH }}' RELEASE='${{ env.RELEASE }}' bash -s" <<'EOSSH'
           set -euo pipefail
 
           : "${DEPLOY_PATH:?missing DEPLOY_PATH}"   # hard fail if still missing
           : "${RELEASE:?missing RELEASE}"
-
-          # Install required PHP extensions on the server
-          # Use sudo with -S option to read password from stdin if needed
-          # If you have passwordless sudo configured, remove the echo part
-          echo "$SUDO_PASSWORD" | sudo -S apt-get update
-          echo "$SUDO_PASSWORD" | sudo -S apt-get install -y php-bcmath php-http
-
-          # For Cassandra (if needed - remove if you don't use Cassandra)
-          # echo "$SUDO_PASSWORD" | sudo -S apt-get install -y php-cassandra || echo "Cassandra extension not available, skipping"
 
           RELEASE_DIR="${DEPLOY_PATH}/releases/${RELEASE}"
           CURRENT_LINK="${DEPLOY_PATH}/current"
@@ -107,10 +108,7 @@ jobs:
           [ -f "${SHARED_DIR}/.env.local" ] && ln -s "${SHARED_DIR}/.env.local" .env.local
 
           # Install PHP deps on the server
-          composer install --no-dev --optimize-autoloader --no-progress --no-interaction \
-              --ignore-platform-req=ext-bcmath \
-              --ignore-platform-req=ext-http \
-              --ignore-platform-req=ext-cassandra
+          composer install --no-dev --optimize-autoloader --no-progress --no-interaction
 
           # Symfony optimize (best-effort)
           if [ -f bin/console ]; then
@@ -118,18 +116,18 @@ jobs:
             php bin/console cache:warmup --env=prod || true
           fi
 
-          # Permissions - use sudo for these operations
-          echo "$SUDO_PASSWORD" | sudo -S chown -R deploy:www-data "$RELEASE_DIR"
-          echo "$SUDO_PASSWORD" | sudo -S find "$RELEASE_DIR/var" -type d -exec chmod 2775 {} \; 2>/dev/null || true
-          echo "$SUDO_PASSWORD" | sudo -S find "$RELEASE_DIR/var" -type f -exec chmod 0664 {} \; 2>/dev/null || true
-
+          # Permissions
+          chown -R deploy:www-data "$RELEASE_DIR"
+          find "$RELEASE_DIR/var" -type d -exec chmod 2775 {} \; 2>/dev/null || true
+          find "$RELEASE_DIR/var" -type f -exec chmod 0664 {} \; 2>/dev/null || true
+      
           # Atomic switch
           ln -sfn "$RELEASE_DIR" "$CURRENT_LINK"
-
-          # Reload services with sudo
-          echo "$SUDO_PASSWORD" | sudo -S systemctl reload php8.2-fpm || true
-          echo "$SUDO_PASSWORD" | sudo -S systemctl reload apache2 || true
-
+      
+          # Reload services
+          systemctl reload php8.2-fpm || true
+          systemctl reload apache2 || true
+      
           # Keep last 5 releases
           cd "${DEPLOY_PATH}/releases"
           ls -1t | tail -n +6 | xargs -r rm -rf --

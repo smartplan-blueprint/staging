@@ -64,30 +64,31 @@ jobs:
               -P "${{ secrets.SSH_PORT }}" release.tgz \
               "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/${RELEASE}.tgz"
 
-      # (4) Remote deploy (same relaxed options)
+      # (4) Remote deploy (same relaxed options) - with sudo password handling
       - name: Remote deploy
         env:
           RELEASE: ${{ env.RELEASE }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          SUDO_PASSWORD: ${{ secrets.SUDO_PASSWORD }}
         run: |
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
               -p "${{ secrets.SSH_PORT }}" \
               "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-              "DEPLOY_PATH='${{ secrets.DEPLOY_PATH }}' RELEASE='${{ env.RELEASE }}' bash -s" << 'EOSSH'
+              "DEPLOY_PATH='${{ secrets.DEPLOY_PATH }}' RELEASE='${{ env.RELEASE }}' SUDO_PASSWORD='$SUDO_PASSWORD' bash -s" << 'EOSSH'
           set -euo pipefail
 
           : "${DEPLOY_PATH:?missing DEPLOY_PATH}"   # hard fail if still missing
           : "${RELEASE:?missing RELEASE}"
 
-          # Install required PHP extensions on the server
-          sudo apt-get update
-          sudo apt-get install -y php8.2-bcmath php8.2-http php8.2-mbstring php8.2-intl php8.2-mysql php8.2-opcache php8.2-curl php8.2-zip
+          # Install required PHP extensions on the server with sudo password
+          echo "$SUDO_PASSWORD" | sudo -S apt-get update
+          echo "$SUDO_PASSWORD" | sudo -S apt-get install -y php8.2-bcmath php8.2-http php8.2-mbstring php8.2-intl php8.2-mysql php8.2-opcache php8.2-curl php8.2-zip
 
           # For Cassandra extension (install via PECL if needed)
-          # sudo apt-get install -y libuv1-dev libgmp-dev pkg-config php8.2-dev
-          # sudo pecl install cassandra
+          # echo "$SUDO_PASSWORD" | sudo -S apt-get install -y libuv1-dev libgmp-dev pkg-config php8.2-dev
+          # echo "$SUDO_PASSWORD" | sudo -S pecl install cassandra
           # echo "extension=cassandra.so" | sudo tee /etc/php/8.2/mods-available/cassandra.ini
-          # sudo phpenmod cassandra
+          # echo "$SUDO_PASSWORD" | sudo -S phpenmod cassandra
 
           RELEASE_DIR="${DEPLOY_PATH}/releases/${RELEASE}"
           CURRENT_LINK="${DEPLOY_PATH}/current"
@@ -106,7 +107,7 @@ jobs:
           ln -s "${SHARED_DIR}/public/uploads" public/uploads
           [ -f "${SHARED_DIR}/.env.local" ] && ln -s "${SHARED_DIR}/.env.local" .env.local
 
-          # Install PHP deps on the server - no need to ignore bcmath since it's now installed
+          # Install PHP deps on the server
           composer install --no-dev --optimize-autoloader --no-progress --no-interaction
 
           # Symfony optimize (best-effort)
@@ -115,17 +116,17 @@ jobs:
             php bin/console cache:warmup --env=prod || true
           fi
 
-          # Permissions
-          chown -R deploy:www-data "$RELEASE_DIR"
-          find "$RELEASE_DIR/var" -type d -exec chmod 2775 {} \; 2>/dev/null || true
-          find "$RELEASE_DIR/var" -type f -exec chmod 0664 {} \; 2>/dev/null || true
+          # Permissions with sudo
+          echo "$SUDO_PASSWORD" | sudo -S chown -R deploy:www-data "$RELEASE_DIR"
+          echo "$SUDO_PASSWORD" | sudo -S find "$RELEASE_DIR/var" -type d -exec chmod 2775 {} \; 2>/dev/null || true
+          echo "$SUDO_PASSWORD" | sudo -S find "$RELEASE_DIR/var" -type f -exec chmod 0664 {} \; 2>/dev/null || true
       
           # Atomic switch
           ln -sfn "$RELEASE_DIR" "$CURRENT_LINK"
       
-          # Reload services
-          systemctl reload php8.2-fpm || true
-          systemctl reload apache2 || true
+          # Reload services with sudo
+          echo "$SUDO_PASSWORD" | sudo -S systemctl reload php8.2-fpm || true
+          echo "$SUDO_PASSWORD" | sudo -S systemctl reload apache2 || true
       
           # Keep last 5 releases
           cd "${DEPLOY_PATH}/releases"

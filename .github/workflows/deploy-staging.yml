@@ -108,7 +108,7 @@ jobs:
                   [ -f "${SHARED_DIR}/.env.local" ] && ln -s "${SHARED_DIR}/.env.local" .env.local
 
                   # Install PHP deps on the server
-                  composer install --no-dev --optimize-autoloader --no-progress --no-interaction --ignore-platform-req=ext-cassandra
+                  composer install --no-dev --optimize-autoloader --no-progress --no-interaction
 
                   # Symfony optimize (best-effort)
                   if [ -f bin/console ]; then

@@ -69,7 +69,6 @@ jobs:
         env:
           RELEASE: ${{ env.RELEASE }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          SUDO_PASSWORD: ${{ secrets.SUDO_PASSWORD }}
         run: |
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
               -p "${{ secrets.SSH_PORT }}" \

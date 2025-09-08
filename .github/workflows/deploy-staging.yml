@@ -65,14 +65,6 @@ jobs:
                       -P "${{ secrets.SSH_PORT }}" release.tgz \
                       "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/${RELEASE}.tgz"
 
-            # Cassandra installation
-            - name: Setup PHP with Cassandra
-              uses: shivammathur/setup-php@v2
-              with:
-                php-version: '8.2'
-                extensions: mbstring, intl, pdo_mysql, opcache, ctype, iconv, curl, zip, cassandra
-                tools: composer:v2
-
             # (4) Remote deploy (same relaxed options)
             - name: Remote deploy
               env:

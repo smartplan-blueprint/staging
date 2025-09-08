@@ -177,6 +177,14 @@ jobs:
           mkdir -p "$COMPOSER_CACHE_DIR"
           export COMPOSER_CACHE_DIR="$COMPOSER_CACHE_DIR"
           
+          # Install required PHP extensions on the server (only if needed)
+          echo "Checking for required PHP extensions..."
+          if ! dpkg -l | grep -q php8.2-http; then
+            echo "Installing PHP extensions..."
+            sudo apt-get update
+            sudo apt-get install -y php8.2-http php8.2-dom php8.2-xml php8.2-simplexml
+          fi
+          
           # Handle composer installation with platform requirement overrides
           if [ -f composer.json ]; then
             echo "Installing Composer dependencies with platform overrides..."

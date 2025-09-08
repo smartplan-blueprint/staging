@@ -1,0 +1,134 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [ "staging" ]
+  workflow_dispatch: {}
+
+env:
+  PHP_VERSION: "8.2"
+
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Release tag
+        run: echo "RELEASE=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, intl, pdo_mysql, opcache, ctype, iconv, curl, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Create source archive from Git
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git archive --format=tar.gz -o release.tgz HEAD \
+            -- \
+              . ":(exclude).github" ":(exclude)node_modules" ":(exclude)tests" ":(exclude)var"
+
+
+      - name: SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+     # (1) Optional: quick connectivity check with clear error
+      - name: Check SSH connectivity
+        run:  |
+          H="${{ secrets.SSH_HOST }}"; P="${{ secrets.SSH_PORT }}"
+          echo "Testing TCP to $H:$P ..."
+          timeout 5 bash -lc ">/dev/tcp/$H/$P" && echo "✅ Reachable" || (echo "❌ Unreachable"; exit 1)
+
+# (2) Try to fetch the host key, but don't fail the job if it times out
+      - name: Trust host (best-effort)
+        run: |
+          mkdir -p ~/.ssh
+          # Prefer IPv4, 15s timeout; ignore failure so the next steps can still proceed
+          ssh-keyscan -4 -T 15 -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts || true
+
+# (3) Upload (skip strict host checking so we don't depend on keyscan)
+      - name: Upload release
+        run: |
+          scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+              -P "${{ secrets.SSH_PORT }}" release.tgz \
+              "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/${RELEASE}.tgz"
+
+# (4) Remote deploy (same relaxed options)
+      - name: Remote deploy
+        env:
+            RELEASE: ${{ env.RELEASE }}
+            DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+              -p "${{ secrets.SSH_PORT }}" \
+              "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" bash -s <<'EOSSH'
+
+      - name: Upload release
+        run: |
+          scp -P ${{ secrets.SSH_PORT }} release.tgz ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/${RELEASE}.tgz
+
+      - name: Remote deploy
+        run: |
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+              -p "${{ secrets.SSH_PORT }}" \
+              "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+              "DEPLOY_PATH='${{ secrets.DEPLOY_PATH }}' RELEASE='${{ env.RELEASE }}' bash -s" <<'EOSSH'
+          set -euo pipefail
+
+          : "${DEPLOY_PATH:?missing DEPLOY_PATH}"   # hard fail if still missing
+          : "${RELEASE:?missing RELEASE}"
+
+          RELEASE_DIR="${DEPLOY_PATH}/releases/${RELEASE}"
+          CURRENT_LINK="${DEPLOY_PATH}/current"
+          SHARED_DIR="${DEPLOY_PATH}/shared"
+
+          mkdir -p "$RELEASE_DIR"
+          tar -xzf "/tmp/${RELEASE}.tgz" -C "$RELEASE_DIR"
+          rm -f "/tmp/${RELEASE}.tgz"
+          cd "$RELEASE_DIR"
+
+          # Link shared dirs/files
+          rm -rf var || true
+          ln -s "${SHARED_DIR}/var" var
+          mkdir -p public/uploads
+          rm -rf public/uploads || true
+          ln -s "${SHARED_DIR}/public/uploads" public/uploads
+          [ -f "${SHARED_DIR}/.env.local" ] && ln -s "${SHARED_DIR}/.env.local" .env.local
+
+          # Install PHP deps on the server
+          composer install --no-dev --optimize-autoloader --no-progress --no-interaction
+
+          # Symfony optimize (best-effort)
+          if [ -f bin/console ]; then
+            php bin/console cache:clear --env=prod || true
+            php bin/console cache:warmup --env=prod || true
+          fi
+
+          # Permissions
+          chown -R deploy:www-data "$RELEASE_DIR"
+          find "$RELEASE_DIR/var" -type d -exec chmod 2775 {} \; 2>/dev/null || true
+          find "$RELEASE_DIR/var" -type f -exec chmod 0664 {} \; 2>/dev/null || true
+      
+          # Atomic switch
+          ln -sfn "$RELEASE_DIR" "$CURRENT_LINK"
+      
+          # Reload services
+          systemctl reload php8.2-fpm || true
+          systemctl reload apache2 || true
+      
+          # Keep last 5 releases
+          cd "${DEPLOY_PATH}/releases"
+          ls -1t | tail -n +6 | xargs -r rm -rf --
+          EOSSH

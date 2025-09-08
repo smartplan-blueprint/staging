@@ -90,13 +90,6 @@ jobs:
                   : "${DEPLOY_PATH:?missing DEPLOY_PATH}"   # hard fail if still missing
                   : "${RELEASE:?missing RELEASE}"
 
-                  # Install required PHP extensions on the server
-                  sudo apt-get update
-                  sudo apt-get install -y php-bcmath php-http
-
-                  # For Cassandra (if needed - remove if you don't use Cassandra)
-                  # sudo apt-get install -y php-cassandra || echo "Cassandra extension not available, skipping"
-
                   RELEASE_DIR="${DEPLOY_PATH}/releases/${RELEASE}"
                   CURRENT_LINK="${DEPLOY_PATH}/current"
                   SHARED_DIR="${DEPLOY_PATH}/shared"
@@ -115,10 +108,7 @@ jobs:
                   [ -f "${SHARED_DIR}/.env.local" ] && ln -s "${SHARED_DIR}/.env.local" .env.local
 
                   # Install PHP deps on the server
-                  composer install --no-dev --optimize-autoloader --no-progress --no-interaction \
-                      --ignore-platform-req=ext-bcmath \
-                      --ignore-platform-req=ext-http \
-                      --ignore-platform-req=ext-cassandra
+                  composer install --no-dev --optimize-autoloader --no-progress --no-interaction
 
                   # Symfony optimize (best-effort)
                   if [ -f bin/console ]; then

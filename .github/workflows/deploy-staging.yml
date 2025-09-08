@@ -1,4 +1,4 @@
-name: Deploy to Staging
+# name: Deploy to Staging
 
 on:
   push:
@@ -19,8 +19,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Fetch all history for proper git archive
 
       - name: Release tag
         run: echo "RELEASE=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
@@ -28,32 +26,18 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ env.PHP_VERSION }}
-          extensions: mbstring, intl, pdo_mysql, opcache, ctype, iconv, curl, zip
+          php-version: '8.2.29'
+          extensions: mbstring, intl, pdo_mysql, opcache, ctype, iconv, curl, zip, http, dom, xml, simplexml
           coverage: none
           tools: composer:v2
-
-      - name: Validate composer.lock
-        run: |
-          # Check if composer.lock exists and is in sync with composer.json
-          if [ -f composer.json ]; then
-            if [ ! -f composer.lock ]; then
-              echo "::error::composer.lock file is missing! Run 'composer install' locally first."
-              exit 1
-            elif [ composer.json -nt composer.lock ]; then
-              echo "::warning::composer.lock is outdated. Run 'composer update --lock' locally to fix."
-              # We'll handle this in the deployment script
-            else
-              echo "✅ composer.lock is up to date"
-            fi
-          fi
+          ini-values: memory_limit=-1
 
       - name: Create source archive from Git
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git archive --format=tar.gz -o release.tgz HEAD \
             -- \
-              . ":(exclude).github" ":(exclude)node_modules" ":(exclude)tests" ":(exclude)var" ":(exclude).git"
+              . ":(exclude).github" ":(exclude)node_modules" ":(exclude)tests" ":(exclude)var"
 
       - name: SSH agent
         uses: webfactory/ssh-agent@v0.9.0
@@ -66,193 +50,113 @@ jobs:
           echo "Testing TCP to $H:$P ..."
           timeout 5 bash -lc ">/dev/tcp/$H/$P" && echo "✅ Reachable" || (echo "❌ Unreachable"; exit 1)
 
-      - name: Trust host
+      - name: Trust host (best-effort)
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -4 -T 15 -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -4 -T 15 -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts || true
 
       - name: Upload release
         run: |
-          scp -o StrictHostKeyChecking=no \
+          scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
               -P "${{ secrets.SSH_PORT }}" release.tgz \
-              "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/${RELEASE}.tgz"
-
-      # - name: Remote deploy
-      #   env:
-      #     RELEASE: ${{ env.RELEASE }}
-      #     DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-      #   run: |
-      #     ssh -o StrictHostKeyChecking=no \
-      #         -p "${{ secrets.SSH_PORT }}" \
-      #         "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-      #         "DEPLOY_PATH='${{ secrets.DEPLOY_PATH }}' RELEASE='${{ env.RELEASE }}' bash -s" <<'EOSSH'
-      #     set -euo pipefail
-
-      #     : "${DEPLOY_PATH:?missing DEPLOY_PATH}"
-      #     : "${RELEASE:?missing RELEASE}"
-
-      #     RELEASE_DIR="${DEPLOY_PATH}/releases/${RELEASE}"
-      #     CURRENT_LINK="${DEPLOY_PATH}/current"
-      #     SHARED_DIR="${DEPLOY_PATH}/shared"
-      #     COMPOSER_CACHE_DIR="${DEPLOY_PATH}/.composer-cache"
-
-      #     mkdir -p "$RELEASE_DIR"
-      #     tar -xzf "/tmp/${RELEASE}.tgz" -C "$RELEASE_DIR"
-      #     rm -f "/tmp/${RELEASE}.tgz"
-      #     cd "$RELEASE_DIR"
-
-      #     # Link shared dirs/files
-      #     rm -rf var || true
-      #     ln -s "${SHARED_DIR}/var" var
-      #     mkdir -p public/uploads
-      #     rm -rf public/uploads || true
-      #     ln -s "${SHARED_DIR}/public/uploads" public/uploads
-      #     [ -f "${SHARED_DIR}/.env.local" ] && ln -s "${SHARED_DIR}/.env.local" .env.local
-
-      #     # Set up composer cache
-      #     mkdir -p "$COMPOSER_CACHE_DIR"
-      #     export COMPOSER_CACHE_DIR="$COMPOSER_CACHE_DIR"
-
-      #     # Handle outdated composer.lock
-      #     if [ -f composer.json ] && [ -f composer.lock ]; then
-      #       if [ composer.json -nt composer.lock ]; then
-      #         echo "⚠️  composer.lock is outdated, generating new one..."
-      #         # Backup original lock file
-      #         cp composer.lock composer.lock.backup || true
-      #         # Update lock file without installing packages
-      #         composer update --lock --no-install --no-interaction --no-scripts --no-autoloader
-      #         echo "✅ composer.lock updated"
-      #       fi
-      #     fi
-
-      #     # Install PHP dependencies
-      #     echo "Installing Composer dependencies..."
-      #     composer install --no-dev --optimize-autoloader --no-progress --no-interaction
-
-      #     # Symfony optimize
-      #     if [ -f bin/console ]; then
-      #       echo "Running Symfony optimization..."
-      #       php bin/console cache:clear --env=prod --no-debug || true
-      #       php bin/console cache:warmup --env=prod --no-debug || true
-      #     fi
-
-      #     # Permissions
-      #     chown -R deploy:www-data "$RELEASE_DIR"
-      #     find "$RELEASE_DIR" -type d -exec chmod 755 {} \; 2>/dev/null || true
-      #     find "$RELEASE_DIR" -type f -exec chmod 644 {} \; 2>/dev/null || true
-      #     find "$RELEASE_DIR/var" -type d -exec chmod 2775 {} \; 2>/dev/null || true
-      #     find "$RELEASE_DIR/var" -type f -exec chmod 0664 {} \; 2>/dev/null || true
-
-      #     # Atomic switch
-      #     ln -sfn "$RELEASE_DIR" "$CURRENT_LINK"
-
-      #     # Reload services
-      #     systemctl reload php8.2-fpm || true
-      #     systemctl reload apache2 || true
-
-      #     # Keep last 5 releases
-      #     cd "${DEPLOY_PATH}/releases"
-      #     ls -1t | tail -n +6 | xargs -r rm -rf --
-
-      #     echo "✅ Deployment completed successfully!"
-      #     EOSSH
-
-      # - name: Cleanup
-      #   run: rm -f release.tgz
+              "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/${{ env.RELEASE }}.tgz"
 
       - name: Remote deploy
-  env:
-    RELEASE: ${{ env.RELEASE }}
-    DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-  run: |
-    ssh -o StrictHostKeyChecking=no \
-        -p "${{ secrets.SSH_PORT }}" \
-        "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-        "DEPLOY_PATH='${{ secrets.DEPLOY_PATH }}' RELEASE='${{ env.RELEASE }}' bash -s" <<'EOSSH'
-    set -euo pipefail
-    : "${DEPLOY_PATH:?missing DEPLOY_PATH}"
-    : "${RELEASE:?missing RELEASE}"
-    
-    RELEASE_DIR="${DEPLOY_PATH}/releases/${RELEASE}"
-    CURRENT_LINK="${DEPLOY_PATH}/current"
-    SHARED_DIR="${DEPLOY_PATH}/shared"
-    COMPOSER_CACHE_DIR="${DEPLOY_PATH}/.composer-cache"
-    
-    mkdir -p "$RELEASE_DIR"
-    tar -xzf "/tmp/${RELEASE}.tgz" -C "$RELEASE_DIR"
-    rm -f "/tmp/${RELEASE}.tgz"
-    cd "$RELEASE_DIR"
-    
-    # Link shared dirs/files
-    rm -rf var || true
-    ln -s "${SHARED_DIR}/var" var
-    mkdir -p public/uploads
-    rm -rf public/uploads || true
-    ln -s "${SHARED_DIR}/public/uploads" public/uploads
-    [ -f "${SHARED_DIR}/.env.local" ] && ln -s "${SHARED_DIR}/.env.local" .env.local
-    
-    # Set up composer cache
-    mkdir -p "$COMPOSER_CACHE_DIR"
-    export COMPOSER_CACHE_DIR="$COMPOSER_CACHE_DIR"
-    
-    # Handle composer installation with platform requirement overrides
-    if [ -f composer.json ]; then
-      echo "Installing Composer dependencies with platform overrides..."
-      composer install --no-dev --optimize-autoloader --no-progress --no-interaction \
-        --ignore-platform-req=ext-http \
-        --ignore-platform-req=php
-    fi
-    
-    # Symfony optimize
-    if [ -f bin/console ]; then
-      echo "Running Symfony optimization..."
-      php bin/console cache:clear --env=prod --no-debug || true
-      php bin/console cache:warmup --env=prod --no-debug || true
-    fi
-    
-    # Permissions
-    chown -R deploy:www-data "$RELEASE_DIR"
-    find "$RELEASE_DIR" -type d -exec chmod 755 {} \; 2>/dev/null || true
-    find "$RELEASE_DIR" -type f -exec chmod 644 {} \; 2>/dev/null || true
-    find "$RELEASE_DIR/var" -type d -exec chmod 2775 {} \; 2>/dev/null || true
-    find "$RELEASE_DIR/var" -type f -exec chmod 0664 {} \; 2>/dev/null || true
-    
-    # Atomic switch
-    ln -sfn "$RELEASE_DIR" "$CURRENT_LINK"
-    
-    # Reload services using sudo if available, or skip if not
-    echo "Reloading services..."
-    if command -v sudo >/dev/null 2>&1; then
-      sudo systemctl reload php8.2-fpm 2>/dev/null || \
-        echo "Warning: Failed to reload php8.2-fpm (may require password)"
-      sudo systemctl reload apache2 2>/dev/null || \
-        echo "Warning: Failed to reload apache2 (may require password)"
-    else
-      systemctl reload php8.2-fpm 2>/dev/null || \
-        echo "Warning: Failed to reload php8.2-fpm"
-      systemctl reload apache2 2>/dev/null || \
-        echo "Warning: Failed to reload apache2"
-    fi
-    
-    # Keep last 5 releases - use force and handle permissions gracefully
-    echo "Cleaning up old releases..."
-    cd "${DEPLOY_PATH}/releases"
-    # List directories by modification time, exclude current and keep last 5
-    ls -1t | grep -E '^[0-9]{14}$' | tail -n +6 | while read -r old_release; do
-      if [ -n "$old_release" ]; then
-        echo "Removing old release: $old_release"
-        # Use sudo if available, otherwise try without
-        if command -v sudo >/dev/null 2>&1; then
-          sudo rm -rf "$old_release" 2>/dev/null || \
-            rm -rf "$old_release" 2>/dev/null || \
-            echo "Warning: Could not remove $old_release completely"
-        else
-          rm -rf "$old_release" 2>/dev/null || \
-            echo "Warning: Could not remove $old_release"
-        fi
-      fi
-    done
-    
-    echo "✅ Deployment completed successfully!"
-    echo "Note: Service reload may require manual intervention if sudo password is needed"
-    EOSSH
+        env:
+          RELEASE: ${{ env.RELEASE }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+              -p "${{ secrets.SSH_PORT }}" \
+              "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+              "DEPLOY_PATH='${{ secrets.DEPLOY_PATH }}' RELEASE='${{ env.RELEASE }}' bash -s" << 'EOF'
+          set -euo pipefail
+          : "${DEPLOY_PATH:?missing DEPLOY_PATH}"
+          : "${RELEASE:?missing RELEASE}"
+          
+          RELEASE_DIR="${DEPLOY_PATH}/releases/${RELEASE}"
+          CURRENT_LINK="${DEPLOY_PATH}/current"
+          SHARED_DIR="${DEPLOY_PATH}/shared"
+          COMPOSER_CACHE_DIR="${DEPLOY_PATH}/.composer-cache"
+          
+          mkdir -p "$RELEASE_DIR"
+          tar -xzf "/tmp/${RELEASE}.tgz" -C "$RELEASE_DIR"
+          rm -f "/tmp/${RELEASE}.tgz"
+          cd "$RELEASE_DIR"
+          
+          # Link shared dirs/files
+          rm -rf var || true
+          ln -s "${SHARED_DIR}/var" var
+          mkdir -p public/uploads
+          rm -rf public/uploads || true
+          ln -s "${SHARED_DIR}/public/uploads" public/uploads
+          [ -f "${SHARED_DIR}/.env.local" ] && ln -s "${SHARED_DIR}/.env.local" .env.local
+          
+          # Set up composer cache
+          mkdir -p "$COMPOSER_CACHE_DIR"
+          export COMPOSER_CACHE_DIR="$COMPOSER_CACHE_DIR"
+          
+          # Handle composer installation with platform requirement overrides
+          if [ -f composer.json ]; then
+            echo "Installing Composer dependencies with platform overrides..."
+            composer install --no-dev --optimize-autoloader --no-progress --no-interaction \
+              --ignore-platform-req=ext-http \
+              --ignore-platform-req=php
+          fi
+          
+          # Symfony optimize
+          if [ -f bin/console ]; then
+            echo "Running Symfony optimization..."
+            php bin/console cache:clear --env=prod --no-debug || true
+            php bin/console cache:warmup --env=prod --no-debug || true
+          fi
+          
+          # Permissions
+          chown -R deploy:www-data "$RELEASE_DIR"
+          find "$RELEASE_DIR" -type d -exec chmod 755 {} \; 2>/dev/null || true
+          find "$RELEASE_DIR" -type f -exec chmod 644 {} \; 2>/dev/null || true
+          find "$RELEASE_DIR/var" -type d -exec chmod 2775 {} \; 2>/dev/null || true
+          find "$RELEASE_DIR/var" -type f -exec chmod 0664 {} \; 2>/dev/null || true
+          
+          # Atomic switch
+          ln -sfn "$RELEASE_DIR" "$CURRENT_LINK"
+          
+          # Reload services using sudo if available, or skip if not
+          echo "Reloading services..."
+          if command -v sudo >/dev/null 2>&1; then
+            sudo systemctl reload php8.2-fpm 2>/dev/null || \
+              echo "Warning: Failed to reload php8.2-fpm (may require password)"
+            sudo systemctl reload apache2 2>/dev/null || \
+              echo "Warning: Failed to reload apache2 (may require password)"
+          else
+            systemctl reload php8.2-fpm 2>/dev/null || \
+              echo "Warning: Failed to reload php8.2-fpm"
+            systemctl reload apache2 2>/dev/null || \
+              echo "Warning: Failed to reload apache2"
+          fi
+          
+          # Keep last 5 releases - use force and handle permissions gracefully
+          echo "Cleaning up old releases..."
+          cd "${DEPLOY_PATH}/releases"
+          # List directories by modification time, exclude current and keep last 5
+          ls -1t | grep -E '^[0-9]{14}$' | tail -n +6 | while read -r old_release; do
+            if [ -n "$old_release" ]; then
+              echo "Removing old release: $old_release"
+              # Use sudo if available, otherwise try without
+              if command -v sudo >/dev/null 2>&1; then
+                sudo rm -rf "$old_release" 2>/dev/null || \
+                  rm -rf "$old_release" 2>/dev/null || \
+                  echo "Warning: Could not remove $old_release completely"
+              else
+                rm -rf "$old_release" 2>/dev/null || \
+                  echo "Warning: Could not remove $old_release"
+              fi
+            fi
+          done
+          
+          echo "✅ Deployment completed successfully!"
+          echo "Note: Service reload may require manual intervention if sudo password is needed"
+          EOF
+
+      - name: Cleanup
+        run: rm -f release.tgz

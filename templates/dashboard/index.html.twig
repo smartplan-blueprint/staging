@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h1 class="h3 mb-0">Dashboard</h1>
+                <a href="{{ path('app_logout') }}" class="btn btn-outline-danger btn-sm">Logout</a>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h4 class="alert-heading">Welcome, {{ user.email }}!</h4>
+                </div>
+                
+                <h4>API Example</h4>
+                <pre class="bg-dark text-light p-3 rounded">
+{{ absolute_url(path('api_dashboard')) }}
+                </pre>
+
+                <h4>User Information</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Email:</strong> {{ user.email }}</p>
+                        <p><strong>Registered:</strong> {{ user.createdAt|date('Y-m-d H:i:s') }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Last Updated:</strong> {{ user.updatedAt|date('Y-m-d H:i:s') }}</p>
+                        <p><strong>User ID:</strong> {{ user.id }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

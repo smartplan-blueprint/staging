@@ -1,0 +1,25 @@
+app_login:
+    path: /login
+    controller: App\Controller\LoginController::login
+    methods: [GET, POST]
+
+app_logout:
+    path: /logout
+    methods: [GET]
+
+app_register:
+    path: /register
+    controller: App\Controller\RegistrationController::register
+    methods: [GET, POST]
+
+app_dashboard:
+    path: /dashboard
+    controller: App\Controller\DashboardController::index
+    methods: [GET]
+
+# ------------------------
+# API routes (via annotations)
+# ------------------------
+controllers:
+    resource: '../src/Controller/'
+    type: annotation

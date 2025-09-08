@@ -2,7 +2,9 @@ name: Deploy to Staging
 
 on:
   push:
-    branches: [ "staging" ]
+    branches: 
+      - staging
+      - Stage
   workflow_dispatch: {}
 
 env:

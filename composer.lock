@@ -11310,7 +11310,6 @@
         "ext-iconv": "*",
         "ext-bcmath": "*",
         "ext-http": "*",
-        "ext-cassandra": "*",
         "ext-json": "*",
         "ext-pdo": "*"
     },

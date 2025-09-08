@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper git archive
 
       - name: Release tag
         run: echo "RELEASE=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
@@ -31,12 +33,18 @@ jobs:
           coverage: none
           tools: composer:v2
 
-      - name: Check composer.lock consistency
+      - name: Validate composer.lock
         run: |
-          if [ -f composer.json ] && [ -f composer.lock ]; then
-            if [ composer.json -nt composer.lock ]; then
-              echo "::warning::composer.lock is outdated. Run 'composer update --lock' locally."
-              # Continue deployment but show warning
+          # Check if composer.lock exists and is in sync with composer.json
+          if [ -f composer.json ]; then
+            if [ ! -f composer.lock ]; then
+              echo "::error::composer.lock file is missing! Run 'composer install' locally first."
+              exit 1
+            elif [ composer.json -nt composer.lock ]; then
+              echo "::warning::composer.lock is outdated. Run 'composer update --lock' locally to fix."
+              # We'll handle this in the deployment script
+            else
+              echo "✅ composer.lock is up to date"
             fi
           fi
 
@@ -45,7 +53,7 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git archive --format=tar.gz -o release.tgz HEAD \
             -- \
-              . ":(exclude).github" ":(exclude)node_modules" ":(exclude)tests" ":(exclude)var"
+              . ":(exclude).github" ":(exclude)node_modules" ":(exclude)tests" ":(exclude)var" ":(exclude).git"
 
       - name: SSH agent
         uses: webfactory/ssh-agent@v0.9.0
@@ -53,19 +61,19 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Check SSH connectivity
-        run:  |
+        run: |
           H="${{ secrets.SSH_HOST }}"; P="${{ secrets.SSH_PORT }}"
           echo "Testing TCP to $H:$P ..."
           timeout 5 bash -lc ">/dev/tcp/$H/$P" && echo "✅ Reachable" || (echo "❌ Unreachable"; exit 1)
 
-      - name: Trust host (best-effort)
+      - name: Trust host
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -4 -T 15 -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts || true
+          ssh-keyscan -4 -T 15 -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Upload release
         run: |
-          scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+          scp -o StrictHostKeyChecking=no \
               -P "${{ secrets.SSH_PORT }}" release.tgz \
               "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/${RELEASE}.tgz"
 
@@ -74,7 +82,7 @@ jobs:
           RELEASE: ${{ env.RELEASE }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
-          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+          ssh -o StrictHostKeyChecking=no \
               -p "${{ secrets.SSH_PORT }}" \
               "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
               "DEPLOY_PATH='${{ secrets.DEPLOY_PATH }}' RELEASE='${{ env.RELEASE }}' bash -s" <<'EOSSH'
@@ -86,6 +94,7 @@ jobs:
           RELEASE_DIR="${DEPLOY_PATH}/releases/${RELEASE}"
           CURRENT_LINK="${DEPLOY_PATH}/current"
           SHARED_DIR="${DEPLOY_PATH}/shared"
+          COMPOSER_CACHE_DIR="${DEPLOY_PATH}/.composer-cache"
 
           mkdir -p "$RELEASE_DIR"
           tar -xzf "/tmp/${RELEASE}.tgz" -C "$RELEASE_DIR"
@@ -100,25 +109,37 @@ jobs:
           ln -s "${SHARED_DIR}/public/uploads" public/uploads
           [ -f "${SHARED_DIR}/.env.local" ] && ln -s "${SHARED_DIR}/.env.local" .env.local
 
-          # Fix composer.lock if outdated
+          # Set up composer cache
+          mkdir -p "$COMPOSER_CACHE_DIR"
+          export COMPOSER_CACHE_DIR="$COMPOSER_CACHE_DIR"
+
+          # Handle outdated composer.lock
           if [ -f composer.json ] && [ -f composer.lock ]; then
-              if [ composer.json -nt composer.lock ]; then
-                  echo "⚠️  composer.lock is outdated, updating..."
-                  composer update --lock --no-install --no-interaction --no-scripts
-              fi
+            if [ composer.json -nt composer.lock ]; then
+              echo "⚠️  composer.lock is outdated, generating new one..."
+              # Backup original lock file
+              cp composer.lock composer.lock.backup || true
+              # Update lock file without installing packages
+              composer update --lock --no-install --no-interaction --no-scripts --no-autoloader
+              echo "✅ composer.lock updated"
+            fi
           fi
 
-          # Install PHP deps
+          # Install PHP dependencies
+          echo "Installing Composer dependencies..."
           composer install --no-dev --optimize-autoloader --no-progress --no-interaction
 
           # Symfony optimize
           if [ -f bin/console ]; then
+            echo "Running Symfony optimization..."
             php bin/console cache:clear --env=prod --no-debug || true
             php bin/console cache:warmup --env=prod --no-debug || true
           fi
 
           # Permissions
           chown -R deploy:www-data "$RELEASE_DIR"
+          find "$RELEASE_DIR" -type d -exec chmod 755 {} \; 2>/dev/null || true
+          find "$RELEASE_DIR" -type f -exec chmod 644 {} \; 2>/dev/null || true
           find "$RELEASE_DIR/var" -type d -exec chmod 2775 {} \; 2>/dev/null || true
           find "$RELEASE_DIR/var" -type f -exec chmod 0664 {} \; 2>/dev/null || true
 
@@ -132,4 +153,9 @@ jobs:
           # Keep last 5 releases
           cd "${DEPLOY_PATH}/releases"
           ls -1t | tail -n +6 | xargs -r rm -rf --
+
+          echo "✅ Deployment completed successfully!"
           EOSSH
+
+      - name: Cleanup
+        run: rm -f release.tgz

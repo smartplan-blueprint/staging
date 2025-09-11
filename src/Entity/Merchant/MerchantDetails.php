@@ -26,7 +26,7 @@ class MerchantDetails
     #[ORM\JoinColumn(name: 'merchant_id', referencedColumnName: 'id', nullable: false)]
     private ?Merchant $merchant = null;
 
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[ORM\Column(type: 'string', length: 255, nullable: false)]
     private ?string $groupName = null;
 
 

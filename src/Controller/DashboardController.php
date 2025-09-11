@@ -466,7 +466,7 @@ class DashboardController extends AbstractController
         return $start->format('F jS') . ' - ' . $end->format('F jS, Y');
     }
 
-    #[Route('/dashboard/select-merchant/{id}', name: 'app_merchant_selection')]
+    #[Route('/dashboard/select-merchant/{id}', name: 'app_merchant_selection', defaults: [null])]
     public function selectMerchant(int $id, MerchantRepository $merchantRepository): Response
     {
         $merchant = $merchantRepository->find($id);
